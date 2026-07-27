@@ -82,7 +82,7 @@ class TestWebhookIntegration(IntegrationTestCase):
             payload={"event": "test"}
         )
 
-    @patch("frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.ApolloCadenceProvider.report_event")
+    @patch("frappe_apollo.webhook.report_event")
     def test_process_webhook_message_sent(self, mock_report_event):
         # Create Communication
         comm = frappe.get_doc({
@@ -123,7 +123,7 @@ class TestWebhookIntegration(IntegrationTestCase):
             payload
         )
 
-    @patch("frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.ApolloCadenceProvider.report_event")
+    @patch("frappe_apollo.webhook.report_event")
     def test_process_webhook_message_opened(self, mock_report_event):
         comm = frappe.get_doc({
             "doctype": "Communication",
@@ -160,7 +160,7 @@ class TestWebhookIntegration(IntegrationTestCase):
             payload
         )
 
-    @patch("frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.ApolloCadenceProvider.report_event")
+    @patch("frappe_apollo.webhook.report_event")
     def test_process_webhook_message_replied(self, mock_report_event):
         payload = {
             "event": "message_replied",
@@ -185,7 +185,7 @@ class TestWebhookIntegration(IntegrationTestCase):
             payload
         )
 
-    @patch("frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.ApolloCadenceProvider.report_event")
+    @patch("frappe_apollo.webhook.report_event")
     def test_process_webhook_unmapped(self, mock_report_event):
         payload = {
             "event": "message_sent",
