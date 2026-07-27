@@ -2,7 +2,7 @@ import frappe
 from frappe.model.document import Document
 import hashlib
 
-class Field(Document):
+class ApolloField(Document):
 	pass
 
 def enqueue_provision_cadence_fields(cadence_name, account_name, sender):
@@ -13,7 +13,7 @@ def enqueue_provision_cadence_fields(cadence_name, account_name, sender):
 		for field_type in ["subject", "message"]:
 			from frappe_controller.utils.background_jobs import enqueue
 			enqueue(
-				"frappe_apollo.apollo.doctype.field.field.provision_a_field",
+				"frappe_apollo.apollo.doctype.apollo_field.apollo_field.provision_a_field",
 				queue="low",
 				cadence_name=cadence_name,
 				step_name=step.name,
@@ -37,7 +37,7 @@ def provision_a_field(cadence_name, step_name, field_type, account_name, sender)
 	from frappe_controller.utils.controller import wait_for_event
 	
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
-	account_status = frappe.db.get_value("Account", account_name, "status")
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	
 	if not is_enabled or account_status != "Authorized" or not row.apollo_id:
 		wait_for_event(
@@ -57,11 +57,11 @@ def provision_a_field(cadence_name, step_name, field_type, account_name, sender)
 	
 	field_name = None
 	try:
-		field_doc = frappe.get_doc("Field", label)
+		field_doc = frappe.get_doc("Apollo Field", label)
 		field_name = field_doc.name
 	except frappe.DoesNotExistError:
 		field_doc = frappe.get_doc({
-			"doctype": "Field",
+			"doctype": "Apollo Field",
 			"label": label,
 			"field_type": apollo_type
 		})

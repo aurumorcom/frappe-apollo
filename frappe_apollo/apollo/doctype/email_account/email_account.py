@@ -5,7 +5,7 @@ def queue_get_email_accounts():
     """
     RQ Job: A daily cron job that sweeps all active Accounts and enqueues the FS Job get_email_accounts for each.
     """
-    accounts = frappe.get_all("Account", filters={"api_key": ["!=", ""]})
+    accounts = frappe.get_all("Apollo Account", filters={"api_key": ["!=", ""]})
     for acc in accounts:
         frappe.enqueue(
             method="frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts",

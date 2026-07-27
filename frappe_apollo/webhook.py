@@ -13,10 +13,10 @@ def handle():
 	bearer_token = token.split(" ")[1]
 	
 	# Verify token against active Accounts
-	accounts = frappe.get_all("Account", fields=["name", "webhook_bearer_token"])
+	accounts = frappe.get_all("Apollo Account", fields=["name", "webhook_bearer_token"])
 	authorized = False
 	for acc in accounts:
-		if acc.webhook_bearer_token and frappe.get_doc("Account", acc.name).get_password("webhook_bearer_token") == bearer_token:
+		if acc.webhook_bearer_token and frappe.get_doc("Apollo Account", acc.name).get_password("webhook_bearer_token") == bearer_token:
 			authorized = True
 			break
 			

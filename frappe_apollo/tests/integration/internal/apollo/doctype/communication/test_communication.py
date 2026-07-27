@@ -52,7 +52,7 @@ class TestCommunicationIntegration(IntegrationTestCase):
             doctype = args[0] if args and isinstance(args[0], str) else (args[0].get('doctype') if args else kwargs.get('doctype'))
             if doctype == "Communication": return mock_comm
             if doctype == "Multi Channel Cadence": return mock_mcc
-            if doctype == "Account": print(f"RETURNING MOCK ACCOUNT {mock_account.status}"); return mock_account
+            if doctype == "Apollo Account": print(f"RETURNING MOCK ACCOUNT {mock_account.status}"); return mock_account
             if doctype == "Cadence": return mock_cadence
             return MagicMock()
             
@@ -124,9 +124,9 @@ class TestCommunicationIntegration(IntegrationTestCase):
             name = args[1] if len(args) > 1 else kwargs.get('name')
             if doctype == "Communication": return mock_comm
             if doctype == "Multi Channel Cadence": return mock_mcc
-            if doctype == "Account": print(f"RETURNING MOCK ACCOUNT {mock_account.status}"); return mock_account
+            if doctype == "Apollo Account": print(f"RETURNING MOCK ACCOUNT {mock_account.status}"); return mock_account
             if doctype == "Cadence": return mock_cadence
-            if doctype == "Field":
+            if doctype == "Apollo Field":
                 if name == "f1": return mock_field_1
                 if name == "f2": return mock_field_2
             return MagicMock()

@@ -167,7 +167,7 @@ controller_events = {
 		"retries": 3,
 		"timeout": 300
 	},
-	"frappe_apollo.apollo.doctype.field.field.create_a_field": {
+	"frappe_apollo.apollo.doctype.apollo_field.apollo_field.create_a_field": {
 		"rate_limit_per_minute": 50,
 		"rate_limit_per_hour": 200,
 		"rate_limit_per_day": 600,

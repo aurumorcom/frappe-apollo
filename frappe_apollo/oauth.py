@@ -15,8 +15,9 @@ def callback(code, state=None):
 	account_name = state
 	if not account_name:
 		frappe.throw(_("State (account name) missing"))
-		
-	account = frappe.get_doc("Account", account_name)
+	
+	account = frappe.get_doc("Apollo Account", account_name)
+	
 	
 	raw_uri = frappe.utils.get_url("/api/method/frappe_apollo.oauth.callback")
 	parsed = urlparse(raw_uri)
@@ -49,4 +50,4 @@ def callback(code, state=None):
 	
 	# Redirect back to Account form
 	frappe.local.response["type"] = "redirect"
-	frappe.local.response["location"] = f"/app/account/{account_name}"
+	frappe.local.response["location"] = f"/app/apollo-account/{account_name}"

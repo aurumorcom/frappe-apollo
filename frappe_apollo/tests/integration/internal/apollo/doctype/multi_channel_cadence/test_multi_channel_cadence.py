@@ -50,7 +50,7 @@ class TestMCCIntegration(IntegrationTestCase):
             doctype = args[0] if args and isinstance(args[0], str) else (args[0].get('doctype') if args else kwargs.get('doctype'))
             if doctype == "Multi Channel Cadence": return mock_mcc
             if doctype == "Email Account": return mock_email_account
-            if doctype == "Account": return mock_account
+            if doctype == "Apollo Account": return mock_account
             return MagicMock()
             
         mock_get_doc.side_effect = mock_get_doc_side_effect
@@ -108,7 +108,7 @@ class TestMCCIntegration(IntegrationTestCase):
             doctype = args[0] if args and isinstance(args[0], str) else (args[0].get('doctype') if args else kwargs.get('doctype'))
             if doctype == "Multi Channel Cadence": return mock_mcc
             if doctype == "Email Account": return mock_email_account
-            if doctype == "Account": return mock_account
+            if doctype == "Apollo Account": return mock_account
             if doctype == "CRM Lead": return mock_lead
             return MagicMock()
             

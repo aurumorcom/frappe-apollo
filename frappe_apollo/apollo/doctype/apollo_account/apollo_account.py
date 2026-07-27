@@ -2,7 +2,7 @@ import frappe
 from frappe.model.document import Document
 from urllib.parse import urlparse, urlunparse
 
-class Account(Document):
+class ApolloAccount(Document):
 	def on_update(self):
 		pass
 			

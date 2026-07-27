@@ -1,6 +1,6 @@
 import frappe
 from frappe.tests import UnitTestCase
-from frappe_apollo.apollo.doctype.field.field import enqueue_provision_cadence_fields, provision_a_field
+from frappe_apollo.apollo.doctype.apollo_field.apollo_field import enqueue_provision_cadence_fields, provision_a_field
 from frappe.exceptions import DoesNotExistError
 from unittest.mock import patch, MagicMock, call
 from frappe_controller.utils.controller import SuspendJob
@@ -23,7 +23,7 @@ class TestField(UnitTestCase):
         
         mock_enqueue.assert_has_calls([
             call(
-                "frappe_apollo.apollo.doctype.field.field.provision_a_field",
+                "frappe_apollo.apollo.doctype.apollo_field.apollo_field.provision_a_field",
                 queue="low",
                 cadence_name="Cad1",
                 step_name="step1",
@@ -32,7 +32,7 @@ class TestField(UnitTestCase):
                 sender="Sender1"
             ),
             call(
-                "frappe_apollo.apollo.doctype.field.field.provision_a_field",
+                "frappe_apollo.apollo.doctype.apollo_field.apollo_field.provision_a_field",
                 queue="low",
                 cadence_name="Cad1",
                 step_name="step1",
@@ -73,9 +73,9 @@ class TestField(UnitTestCase):
         def mock_get_doc_side_effect(doctype, *args, **kwargs):
             if doctype == "Cadence":
                 return mock_cadence
-            if doctype == "Field" and args and isinstance(args[0], str):
+            if doctype == "Apollo Field" and args and isinstance(args[0], str):
                 raise DoesNotExistError()
-            elif isinstance(doctype, dict) and doctype.get("doctype") == "Field":
+            elif isinstance(doctype, dict) and doctype.get("doctype") == "Apollo Field":
                 doc = MagicMock()
                 doc.name = "new_field"
                 doc.get.return_value = [] # apollo_ids

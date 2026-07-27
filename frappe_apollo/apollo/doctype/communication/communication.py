@@ -35,10 +35,10 @@ def update_a_contact(comm_name):
 			condition="argument.get('enabled') == 1"
 		)
 		
-	account = frappe.get_doc("Account", account_name)
+	account = frappe.get_doc("Apollo Account", account_name)
 	if account.status != "Authorized":
 		wait_for_event(
-			event_key="doc:Account:on_update",
+			event_key="doc:Apollo Account:on_update",
 			condition=f"argument.get('name') == '{account_name}' and argument.get('status') == 'Authorized'"
 		)
 		
@@ -70,7 +70,7 @@ def update_a_contact(comm_name):
 		)
 		
 	# Wait for actual Field docs to have the mapped apollo_id for this account
-	subject_field = frappe.get_doc("Field", step_doc.subject_field)
+	subject_field = frappe.get_doc("Apollo Field", step_doc.subject_field)
 	subject_apollo_id = None
 	for row in subject_field.get("apollo_ids", []):
 		if row.account == account_name and row.apollo_sequence_id == mcc.apollo_sequence_id:
@@ -79,7 +79,7 @@ def update_a_contact(comm_name):
 			
 	if not subject_apollo_id:
 		wait_for_event(
-			event_key="doc:Field:on_update",
+			event_key="doc:Apollo Field:on_update",
 			condition=f"argument.get('name') == '{subject_field.name}'"
 		)
 		subject_field.reload()
@@ -88,7 +88,7 @@ def update_a_contact(comm_name):
 				subject_apollo_id = row.apollo_id
 				break
 		
-	response_field = frappe.get_doc("Field", step_doc.message_field)
+	response_field = frappe.get_doc("Apollo Field", step_doc.message_field)
 	response_apollo_id = None
 	for row in response_field.get("apollo_ids", []):
 		if row.account == account_name and row.apollo_sequence_id == mcc.apollo_sequence_id:
@@ -97,7 +97,7 @@ def update_a_contact(comm_name):
 			
 	if not response_apollo_id:
 		wait_for_event(
-			event_key="doc:Field:on_update",
+			event_key="doc:Apollo Field:on_update",
 			condition=f"argument.get('name') == '{response_field.name}'"
 		)
 		response_field.reload()

@@ -22,18 +22,18 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
             frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 0)
             
         # Setup accounts
-        if not frappe.db.exists("Account", "TestAccount1"):
+        if not frappe.db.exists("Apollo Account", "TestAccount1"):
             frappe.get_doc({
-                "doctype": "Account",
+                "doctype": "Apollo Account",
                 "account_name": "TestAccount1",
                 "status": "Unauthorized"
             }).insert(ignore_permissions=True)
         else:
-            frappe.db.set_value("Account", "TestAccount1", "status", "Unauthorized")
+            frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Unauthorized")
 
-        if not frappe.db.exists("Account", "TestAccount2"):
+        if not frappe.db.exists("Apollo Account", "TestAccount2"):
             frappe.get_doc({
-                "doctype": "Account",
+                "doctype": "Apollo Account",
                 "account_name": "TestAccount2",
                 "status": "Authorized"
             }).insert(ignore_permissions=True)
@@ -84,6 +84,8 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
                 "response": "Test"
             }).insert(ignore_permissions=True)
 
+        frappe.db.commit()
+
     @classmethod
     def tearDownClass(cls):
         frappe.db.rollback()
@@ -92,8 +94,8 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
     def setUp(self):
         super().setUp()
         frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 0)
-        frappe.db.set_value("Account", "TestAccount1", "status", "Unauthorized")
-        frappe.db.set_value("Account", "TestAccount2", "status", "Authorized")
+        frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Unauthorized")
+        frappe.db.set_value("Apollo Account", "TestAccount2", "status", "Authorized")
 
     def tearDown(self):
         frappe.db.rollback()
@@ -138,7 +140,7 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
             
         # Authorize and Enable
         frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
-        frappe.db.set_value("Account", "TestAccount1", "status", "Authorized")
+        frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Authorized")
         
         # Remove Account_1 from apollo_ids to test Fail Fast
         cadence.apollo_ids = [row for row in cadence.apollo_ids if row.account != "TestAccount1"]

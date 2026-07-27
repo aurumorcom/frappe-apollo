@@ -14,13 +14,13 @@ class TestEmailAccountIntegration(IntegrationTestCase):
         
         # Setup accounts inside transaction so they rollback automatically
         frappe.get_doc({
-            "doctype": "Account",
+            "doctype": "Apollo Account",
             "account_name": "Mailbox Test Account",
             "api_key": "some_key"
         }).insert(ignore_permissions=True)
         
         frappe.get_doc({
-            "doctype": "Account",
+            "doctype": "Apollo Account",
             "account_name": "Another Test Account",
             "api_key": "some_key"
         }).insert(ignore_permissions=True)

@@ -20,9 +20,9 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
 
     def setUp(self):
         super().setUp()
-        if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Account", self.account_name):
+        if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Apollo Account", self.account_name):
             frappe.get_doc({
-                "doctype": "Account",
+                "doctype": "Apollo Account",
                 "account_name": self.account_name,
                 "api_key": "dummy_api_key_for_vcr",
                 "client_id": "dummy_client_id",
@@ -34,9 +34,9 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
         frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
         
         # Disable other accounts so they don't interfere
-        for acc in frappe.get_all("Account", filters={"name": ["!=", self.account_name]}):
-            frappe.db.set_value("Account", acc.name, "status", "Unauthorized")
-        frappe.db.set_value("Account", self.account_name, "status", "Authorized")
+        for acc in frappe.get_all("Apollo Account", filters={"name": ["!=", self.account_name]}):
+            frappe.db.set_value("Apollo Account", acc.name, "status", "Unauthorized")
+        frappe.db.set_value("Apollo Account", self.account_name, "status", "Authorized")
 
     def tearDown(self):
         frappe.db.rollback()
@@ -87,16 +87,16 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
                 "response": "Test"
             }).insert(ignore_permissions=True, ignore_mandatory=True)
 
-        if not frappe.db.exists("Field", "custom_subject"):
+        if not frappe.db.exists("Apollo Field", "custom_subject"):
             frappe.get_doc({
-                "doctype": "Field",
+                "doctype": "Apollo Field",
                 "name": "custom_subject",
                 "label": "custom_subject"
             }).insert(ignore_permissions=True, ignore_mandatory=True)
 
-        if not frappe.db.exists("Field", "custom_message"):
+        if not frappe.db.exists("Apollo Field", "custom_message"):
             frappe.get_doc({
-                "doctype": "Field",
+                "doctype": "Apollo Field",
                 "name": "custom_message",
                 "label": "custom_message"
             }).insert(ignore_permissions=True, ignore_mandatory=True)
@@ -148,16 +148,16 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
         self.assertEqual(len(steps), 1, "Sequence steps were not provisioned.")
 
         # Test Sequence Updating
-        if not frappe.db.exists("Field", "custom_subject2"):
+        if not frappe.db.exists("Apollo Field", "custom_subject2"):
             frappe.get_doc({
-                "doctype": "Field",
+                "doctype": "Apollo Field",
                 "name": "custom_subject2",
                 "label": "custom_subject2"
             }).insert(ignore_permissions=True, ignore_mandatory=True)
 
-        if not frappe.db.exists("Field", "custom_message2"):
+        if not frappe.db.exists("Apollo Field", "custom_message2"):
             frappe.get_doc({
-                "doctype": "Field",
+                "doctype": "Apollo Field",
                 "name": "custom_message2",
                 "label": "custom_message2"
             }).insert(ignore_permissions=True, ignore_mandatory=True)

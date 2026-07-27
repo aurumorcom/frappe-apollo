@@ -7,13 +7,13 @@ class TestOAuth(IntegrationTestCase):
 		super().setUp()
 		
 		# Delete if exists to avoid collision before inserting inside the transaction
-		if frappe.db.exists("Account", "Test Account OAuth"):
-			frappe.delete_doc("Account", "Test Account OAuth", force=1, ignore_permissions=True)
-		frappe.db.sql("DELETE FROM `__Auth` WHERE `doctype` = 'Account' AND `name` = 'Test Account OAuth'")
+		if frappe.db.exists("Apollo Account", "Test Account OAuth"):
+			frappe.delete_doc("Apollo Account", "Test Account OAuth", force=1, ignore_permissions=True)
+		frappe.db.sql("DELETE FROM `__Auth` WHERE `doctype` = 'Apollo Account' AND `name` = 'Test Account OAuth'")
 		
 		# Create Account
 		frappe.get_doc({
-			"doctype": "Account",
+			"doctype": "Apollo Account",
 			"account_name": "Test Account OAuth",
 			"webhook_bearer_token": "secret123",
 			"client_id": "client_id",
@@ -45,9 +45,9 @@ class TestOAuth(IntegrationTestCase):
 		from frappe_apollo.oauth import callback
 		callback("auth_code_123", "Test Account OAuth")
 		
-		account = frappe.get_doc("Account", "Test Account OAuth")
+		account = frappe.get_doc("Apollo Account", "Test Account OAuth")
 		self.assertEqual(account.get_password("access_token"), "new_access")
 		self.assertEqual(account.get_password("refresh_token"), "new_refresh")
 		
 		self.assertEqual(frappe.local.response["type"], "redirect")
-		self.assertEqual(frappe.local.response["location"], "/app/account/Test Account OAuth")
+		self.assertEqual(frappe.local.response["location"], "/app/apollo-account/Test Account OAuth")

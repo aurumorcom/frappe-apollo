@@ -17,7 +17,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Account",
-   "options": "Account",
+   "options": "Apollo Account",
    "reqd": 1
   },
   {

@@ -9,7 +9,7 @@ class ApolloRateLimitError(Exception):
 class ApolloClient:
 	def __init__(self, account_name):
 		self.account_name = account_name
-		self.account = frappe.get_doc("Account", account_name)
+		self.account = frappe.get_doc("Apollo Account", account_name)
 		self.base_url = "https://api.apollo.io/api/v1"
 		
 	def get_email_accounts(self):
