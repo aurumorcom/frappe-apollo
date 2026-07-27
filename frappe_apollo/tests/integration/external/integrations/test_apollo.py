@@ -27,9 +27,9 @@ class TestApolloExternalAPI(IntegrationTestCase):
 
 	def setUp(self):
 		super().setUp()
-		if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Account", self.account_name):
+		if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Apollo Account", self.account_name):
 			frappe.get_doc({
-				"doctype": "Account",
+				"doctype": "Apollo Account",
 				"account_name": self.account_name,
 				"api_key": "dummy_api_key_for_vcr",
 				"client_id": "dummy_client_id",
@@ -224,7 +224,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			if not os.path.exists(os.path.join(os.path.dirname(__file__), 'cassettes', 'test_apollo_refresh.yaml')):
 				self.skipTest("No credentials and no cassette found for this test.")
 
-		account = frappe.get_doc("Account", self.account_name)
+		account = frappe.get_doc("Apollo Account", self.account_name)
 		original_expired = frappe.utils.add_to_date(frappe.utils.now_datetime(), days=-1)
 		account.db_set("expired", original_expired)
 		account.db_set("refresh_token", "dummy_refresh")
