@@ -19,7 +19,7 @@ def on_update(doc, method=None):
 		)
 		
 		# Field provisioning per account/schedule
-		frappe.get_attr("frappe_apollo.apollo.doctype.field.field.enqueue_provision_cadence_fields")(doc.name, row.account, row.sender)
+		frappe.get_attr("frappe_apollo.apollo.doctype.apollo_field.apollo_field.enqueue_provision_cadence_fields")(doc.name, row.account, row.sender)
 
 	if doc.has_value_changed("enabled"):
 		for row in doc.get("apollo_ids", []):
@@ -73,12 +73,12 @@ def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 		return
 		
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
-	account_status = frappe.db.get_value("Account", account_name, "status")
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	
 	if not is_enabled or account_status != "Authorized":
 		from frappe_controller.utils.controller import wait_for_event
 		wait_for_event(
-			f"doc:Account:on_update:{account_name}",
+			f"doc:Apollo Account:on_update:{account_name}",
 			condition="doc.status == 'Authorized'",
 			consider_events_since=doc.modified
 		)
