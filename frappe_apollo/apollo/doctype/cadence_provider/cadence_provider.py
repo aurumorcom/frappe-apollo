@@ -1,10 +1,4 @@
 import frappe
-from frappe_cadence.cadence.doctype.cadence_provider.cadence_provider import BaseCadenceProvider
-
-class ApolloCadenceProvider(BaseCadenceProvider):
-	@classmethod
-	def report_event(cls, event_type: str, context: dict, data: dict = None):
-		pass
 
 def on_update(doc, method=None):
 	if doc.name == "Apollo":
