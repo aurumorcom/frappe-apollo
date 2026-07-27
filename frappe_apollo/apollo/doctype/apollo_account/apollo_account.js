@@ -1,4 +1,4 @@
-frappe.ui.form.on('Account', {
+frappe.ui.form.on('Apollo Account', {
 	refresh: function(frm) {
 		if (!frm.is_new() && frm.doc.client_id) {
 			if (frm.doc.status === "Unauthorized") {
