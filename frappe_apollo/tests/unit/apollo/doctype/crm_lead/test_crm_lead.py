@@ -57,7 +57,7 @@ class TestCRMLead(UnitTestCase):
             if dt == "Multi Channel Cadence": return mcc
             if dt == "Cadence": return cadence
             if dt == "Email Account": return email_acc
-            if dt == "Account": return MagicMock(status="Authorized")
+            if dt == "Apollo Account": return MagicMock(status="Authorized")
             if dt == "CRM Lead": return lead
             return MagicMock()
             
@@ -108,7 +108,7 @@ class TestCRMLead(UnitTestCase):
             if dt == "Multi Channel Cadence": return mcc
             if dt == "Cadence": return cadence
             if dt == "Email Account": return email_acc
-            if dt == "Account": return MagicMock(status="Authorized")
+            if dt == "Apollo Account": return MagicMock(status="Authorized")
             if dt == "CRM Lead": return lead
             return MagicMock()
             
