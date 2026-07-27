@@ -149,12 +149,8 @@ doc_events = {
 	}
 }
 
-cadence_providers = {
-	"Apollo": "frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.ApolloCadenceProvider"
-}
-
 scheduler_events = {
-	"daily": [
+	"all": [
 		"frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"
 	]
 }

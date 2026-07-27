@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe_cadence.cadence.doctype.cadence_provider.cadence_provider import report_event
 
 @frappe.whitelist(allow_guest=True)
 def handle():
@@ -38,8 +39,6 @@ def process_webhook(payload):
 	"""
 	FS Job: Handles Apollo webhook data asynchronously.
 	"""
-	from frappe_apollo.apollo.doctype.cadence_provider.cadence_provider import ApolloCadenceProvider
-
 	event = payload.get("event")
 	contact_id = payload.get("contact_id")
 	sequence_id = payload.get("emailer_campaign_id")
@@ -78,11 +77,11 @@ def process_webhook(payload):
 		
 		if comms:
 			context["communication_name"] = comms[0].name
-			ApolloCadenceProvider.report_event("message_sent", context, payload)
+			report_event("message_sent", context, payload)
 		else:
 			frappe.log_error("comms not found")
 	elif event == "message_replied":
-		ApolloCadenceProvider.report_event("message_replied", context, payload)
+		report_event("message_replied", context, payload)
 		
 	elif event == "message_opened":
 		comms = frappe.get_all("Communication", filters={
@@ -93,8 +92,8 @@ def process_webhook(payload):
 		
 		if comms:
 			context["communication_name"] = comms[0].name
-			ApolloCadenceProvider.report_event("message_opened", context, payload)
+			report_event("message_opened", context, payload)
 			
 	elif event == "bounce":
-		ApolloCadenceProvider.report_event("bounce", context, payload)
+		report_event("bounce", context, payload)
 	
