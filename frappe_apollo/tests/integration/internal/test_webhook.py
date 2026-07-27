@@ -15,7 +15,7 @@ class TestWebhookIntegration(IntegrationTestCase):
 
         # Create base records
         frappe.get_doc({
-            "doctype": "Account",
+            "doctype": "Apollo Account",
             "account_name": "Webhook Account",
             "webhook_bearer_token": "valid_token"
         }).insert(ignore_permissions=True)
