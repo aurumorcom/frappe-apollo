@@ -49,10 +49,10 @@ def _create_a_contact(mcc_name):
 			condition="argument.get('enabled') == 1"
 		)
 
-	account = frappe.get_doc("Account", account_name)
+	account = frappe.get_doc("Apollo Account", account_name)
 	if account.status != "Authorized":
 		wait_for_event(
-			event_key="doc:Account:on_update",
+			event_key="doc:Apollo Account:on_update",
 			condition=f"argument.get('name') == '{account_name}' and argument.get('status') == 'Authorized'"
 		)
 
@@ -102,7 +102,7 @@ def create_a_contact(lead_name, account_name):
 	if not is_enabled:
 		raise SuspendJob("Apollo Cadence Provider is disabled.")
 
-	account_status = frappe.db.get_value("Account", account_name, "status")
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
 		raise SuspendJob("Apollo Account is not Authorized.")
 
@@ -137,7 +137,7 @@ def update_a_contact(lead_name, account_name):
 	if not is_enabled:
 		raise SuspendJob("Apollo Cadence Provider is disabled.")
 
-	account_status = frappe.db.get_value("Account", account_name, "status")
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
 		raise SuspendJob("Apollo Account is not Authorized.")
 
