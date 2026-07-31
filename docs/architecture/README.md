@@ -29,6 +29,7 @@ Welcome to the architectural documentation for the **`frappe_apollo`** applicati
 - [**09 Architecture Decisions (ADRs)**](arc42/09_architecture_decisions/0001-record-architecture-decisions.md)
   - [0001 Baseline Architectural Decisions](arc42/09_architecture_decisions/0001-record-architecture-decisions.md)
   - [0002 Rename Account, Field, and Field Apollo ID DocTypes](arc42/09_architecture_decisions/0002-rename-account-and-field-doctypes.md)
+  - [0003 Convert API Key to Password Type, Disable Strength Checks, and Add Workspace Sidebar](arc42/09_architecture_decisions/0003-convert-api-key-to-password-and-disable-strength-checks.md)
 - [**10 Quality Requirements**](arc42/10_quality_requirements.md)
 - [**11 Risks and Technical Debt**](arc42/11_risks_and_technical_debt.md)
 - [**12 Glossary**](arc42/12_glossary.md)

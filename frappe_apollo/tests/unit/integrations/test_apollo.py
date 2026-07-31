@@ -9,7 +9,7 @@ class TestApolloClient(UnitTestCase):
     @patch("frappe.get_doc")
     def test_get_headers_api_key(self, mock_get_doc):
         mock_account = MagicMock()
-        mock_account.api_key = "test_key"
+        mock_account.get_password.side_effect = lambda field: "test_key" if field == "api_key" else None
         mock_account.access_token = None
         mock_account.refresh_token = None
         mock_get_doc.return_value = mock_account
@@ -23,10 +23,8 @@ class TestApolloClient(UnitTestCase):
     @patch("frappe.get_doc")
     def test_get_headers_oauth(self, mock_get_doc):
         mock_account = MagicMock()
-        mock_account.api_key = None
-        mock_account.refresh_token = None
+        mock_account.get_password.side_effect = lambda field: "actual_token_value" if field == "access_token" else None
         mock_account.access_token = "some_token"
-        mock_account.get_password.return_value = "actual_token_value"
         mock_get_doc.return_value = mock_account
 
         client = ApolloClient("Test Account")
@@ -40,7 +38,7 @@ class TestApolloClient(UnitTestCase):
     @patch("frappe_apollo.integrations.apollo.requests.request")
     def test_rate_limit_error(self, mock_request, mock_get_doc):
         mock_account = MagicMock()
-        mock_account.api_key = "key"
+        mock_account.get_password.side_effect = lambda field: "key" if field == "api_key" else None
         mock_account.refresh_token = None
         mock_get_doc.return_value = mock_account
 

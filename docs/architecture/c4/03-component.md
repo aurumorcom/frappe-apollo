@@ -27,15 +27,15 @@ erDiagram
 
 #### `Apollo Account`
 - **File**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.py:5)
-- **Primary Key**: `account_name` (Data, Unique)
+- **Primary Key**: `account_name` (Data, Unique, In List View)
 - **Attributes**:
-  - `status`: Select (`Authorized`, `Unauthorized`)
-  - `api_key`: Data
+  - `status`: Select (`Authorized`, `Unauthorized`, Hidden in Form, In List View)
+  - `api_key`: Password
   - `client_id`: Data
   - `client_secret`: Password
   - `refresh_token`: Password (Hidden)
   - `access_token`: Password (Hidden)
-  - `expired`: Datetime (Read Only)
+  - `expired`: Datetime (Read Only, Hidden)
   - `webhook_bearer_token`: Password
 
 #### `Cadence Apollo ID`

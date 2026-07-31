@@ -115,8 +115,9 @@ class ApolloClient:
 			"Cache-Control": "no-cache",
 			"Content-Type": "application/json"
 		}
-		if self.account.api_key:
-			headers["X-Api-Key"] = self.account.api_key
+		api_key = self.account.get_password("api_key")
+		if api_key:
+			headers["X-Api-Key"] = api_key
 		elif self.account.access_token:
 			headers["Authorization"] = f"Bearer {self.account.get_password('access_token')}"
 		return headers
