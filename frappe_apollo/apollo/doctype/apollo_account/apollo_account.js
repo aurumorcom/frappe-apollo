@@ -1,4 +1,11 @@
 frappe.ui.form.on('Apollo Account', {
+	onload: function(frm) {
+		['api_key', 'client_secret', 'refresh_token', 'access_token', 'webhook_bearer_token'].forEach(fieldname => {
+			if (frm.fields_dict[fieldname]) {
+				frm.fields_dict[fieldname].disable_password_checks();
+			}
+		});
+	},
 	refresh: function(frm) {
 		if (!frm.is_new() && frm.doc.client_id) {
 			if (frm.doc.status === "Unauthorized") {
