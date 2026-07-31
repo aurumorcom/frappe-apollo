@@ -1,0 +1,54 @@
+{
+ "app": "frappe_apollo",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "key",
+ "items": [
+  {
+   "child": 0,
+   "label": "Apollo Account",
+   "link_to": "Apollo Account",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Apollo Field",
+   "link_to": "Apollo Field",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Apollo Field Apollo ID",
+   "link_to": "Apollo Field Apollo ID",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Cadence Apollo ID",
+   "link_to": "Cadence Apollo ID",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "CRM Lead Apollo ID",
+   "link_to": "CRM Lead Apollo ID",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Email Account Apollo ID",
+   "link_to": "Email Account Apollo ID",
+   "link_type": "DocType",
+   "type": "Link"
+  }
+ ],
+ "module": "Apollo",
+ "name": "Apollo",
+ "standard": 1,
+ "title": "Apollo"
+}
