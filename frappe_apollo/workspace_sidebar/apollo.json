@@ -20,29 +20,43 @@
   },
   {
    "child": 0,
-   "label": "Apollo Field Apollo ID",
-   "link_to": "Apollo Field Apollo ID",
+   "label": "Cadence Provider",
+   "link_to": "Cadence Provider",
    "link_type": "DocType",
    "type": "Link"
   },
   {
    "child": 0,
-   "label": "Cadence Apollo ID",
-   "link_to": "Cadence Apollo ID",
+   "label": "Cadence",
+   "link_to": "Cadence",
    "link_type": "DocType",
    "type": "Link"
   },
   {
    "child": 0,
-   "label": "CRM Lead Apollo ID",
-   "link_to": "CRM Lead Apollo ID",
+   "label": "Multi Channel Cadence",
+   "link_to": "Multi Channel Cadence",
    "link_type": "DocType",
    "type": "Link"
   },
   {
    "child": 0,
-   "label": "Email Account Apollo ID",
-   "link_to": "Email Account Apollo ID",
+   "label": "Email Account",
+   "link_to": "Email Account",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "CRM Lead",
+   "link_to": "CRM Lead",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Communication",
+   "link_to": "Communication",
    "link_type": "DocType",
    "type": "Link"
   }
