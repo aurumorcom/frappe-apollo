@@ -15,7 +15,7 @@ def update_a_contact(comm_name):
 	
 	comm = frappe.get_doc("Communication", comm_name)
 	
-	if comm.get("apollo_sync_status") == "Synced":
+	if comm.get("apollo_status") == "Scheduled":
 		return
 		
 	mcc = frappe.get_doc("Multi Channel Cadence", comm.reference_name)
@@ -112,7 +112,7 @@ def update_a_contact(comm_name):
 	try:
 		client.update_contact(contact_apollo_id, custom_fields)
 		comm.db_set("apollo_id", contact_apollo_id)
-		comm.db_set("apollo_sync_status", "Synced")
+		comm.db_set("apollo_status", "Scheduled")
 	except Exception as e:
 		frappe.log_error(title="Failed to sync Communication to Apollo", message=str(e))
 		raise
