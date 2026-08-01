@@ -146,3 +146,4 @@ class TestCommunicationIntegration(IntegrationTestCase):
         update_a_contact("comm1")
         
         mock_client.update_contact.assert_called_once_with("pid1", {"af1": "Test Sub", "af2": "Test Content"})
+        mock_comm.db_set.assert_any_call("apollo_status", "Scheduled")
