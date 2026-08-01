@@ -109,3 +109,15 @@ erDiagram
 - **File**: [`apps/frappe_apollo/frappe_apollo/webhook.py`](apps/frappe_apollo/frappe_apollo/webhook.py:5)
 - **Route**: `/api/method/frappe_apollo.webhook.handle`
 - **Auth**: Bearer token checked against `Apollo Account.webhook_bearer_token`
+
+### 4. Setup & Lifecycle Hooks
+
+#### `after_install`
+- **File**: [`apps/frappe_apollo/frappe_apollo/install.py`](apps/frappe_apollo/frappe_apollo/install.py:6)
+- **Hook**: `after_install` in [`hooks.py`](apps/frappe_apollo/frappe_apollo/hooks.py:89)
+- **Behavior**: Verifies the existence of the `Cadence Provider` DocType and automatically provisions the `"Apollo"` provider record mapped to the `"Email"` channel.
+
+#### `before_uninstall`
+- **File**: [`apps/frappe_apollo/frappe_apollo/uninstall.py`](apps/frappe_apollo/frappe_apollo/uninstall.py:6)
+- **Hook**: `before_uninstall` in [`hooks.py`](apps/frappe_apollo/frappe_apollo/hooks.py:94)
+- **Behavior**: Cleans up and removes the `"Apollo"` `Cadence Provider` document and its child records upon application removal.
