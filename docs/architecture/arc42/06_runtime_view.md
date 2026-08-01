@@ -72,7 +72,7 @@ flowchart TD
         OnUpdateComm --> UpdateContactCustomFields["Communication update_a_contact()"]
         UpdateContactCustomFields --> MapCustomFieldIDs["Map Subject & Message Fields via Apollo Field Apollo ID"]
         MapCustomFieldIDs --> PatchContactAPI["ApolloClient update_contact()"]
-        PatchContactAPI --> MarkSynced["Set Communication apollo_sync_status = 'Synced'"]
+        PatchContactAPI --> MarkSynced["Set Communication apollo_status = 'Scheduled'"]
         MarkSynced --> EndCommSync(["Communication Custom Fields Synced"])
     end
 
