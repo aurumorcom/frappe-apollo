@@ -64,7 +64,7 @@ docstring-code-format = true
 
 [tool.bumpver]
 current_version = "16.0.0"
-version_pattern = "16.MAJOR.MINOR"
+version_pattern = "16.MINOR.PATCH"
 commit_message = "bump version {old_version} -> {new_version}"
 commit = true
 tag = true
