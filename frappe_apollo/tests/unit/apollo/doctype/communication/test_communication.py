@@ -41,7 +41,7 @@ class TestCommunicationOverride(UnitTestCase):
     @patch("frappe.get_doc")
     def test_idempotency(self, mock_get_doc):
         mock_comm = MagicMock()
-        mock_comm.get.return_value = "Synced"
+        mock_comm.get.return_value = "Scheduled"
         mock_get_doc.return_value = mock_comm
         
         # Should return early
@@ -190,4 +190,4 @@ class TestCommunicationOverride(UnitTestCase):
         )
         
         mock_comm.db_set.assert_any_call("apollo_id", "apollo-person-1")
-        mock_comm.db_set.assert_any_call("apollo_sync_status", "Synced")
+        mock_comm.db_set.assert_any_call("apollo_status", "Scheduled")
