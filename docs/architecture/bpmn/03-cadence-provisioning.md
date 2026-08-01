@@ -14,20 +14,23 @@ flowchart TD
     OnUpdateCadence --> EnqueueFieldProv["Enqueue provision_a_field()"]
     
     %% Sequence Provisioning Loop
-    EnqueueSeqProv --> CheckAccountAuth{"Provider Enabled & Account Authorized?"}
-    CheckAccountAuth -- No --> WaitAccountAuth["wait_for_event('Apollo Account on_update')"]
+    EnqueueSeqProv --> CheckProvEnabled{"Provider Enabled?"}
+    CheckProvEnabled -- No --> WaitProvEnable["wait_for_event 'Cadence Provider on_update'"]
+    WaitProvEnable -. Event Trigger .-> CheckProvEnabled
+    CheckProvEnabled -- Yes --> CheckAccountAuth{"Account Authorized?"}
+    CheckAccountAuth -- No --> WaitAccountAuth["wait_for_event 'Apollo Account on_update'"]
     WaitAccountAuth -. Event Trigger .-> CheckAccountAuth
     CheckAccountAuth -- Yes --> CheckSeqExists{"Sequence Apollo ID Exists?"}
     CheckSeqExists -- Yes --> UpdateSeq["ApolloClient update_sequence()"]
     CheckSeqExists -- No --> CreateSeq["ApolloClient create_sequence()"]
-    CreateSeq --> SaveSeqID["Save ID in Cadence Apollo ID"]
+    CreateSeq --> SaveSeqID["Save ID in Cadence Apollo ID & doc.save()"]
     SaveSeqID --> EmitCadenceUpdate["Emit Cadence on_update Event"]
     UpdateSeq --> EndCadenceProv(["Cadence Provisioned"])
     EmitCadenceUpdate --> EndCadenceProv
     
     %% Field Provisioning Loop
     EnqueueFieldProv --> CheckSeqIDReady{"Sequence Apollo ID Available?"}
-    CheckSeqIDReady -- No --> WaitCadenceSeq["wait_for_event('Cadence on_update')"]
+    CheckSeqIDReady -- No --> WaitCadenceSeq["wait_for_event 'Cadence on_update'"]
     WaitCadenceSeq -. Event Trigger .-> CheckSeqIDReady
     CheckSeqIDReady -- Yes --> GetOrCreateField["Get/Create Apollo Field Doc & Attach to Cadence Step"]
     GetOrCreateField --> CheckFieldMap{"Apollo Field Apollo ID Mapped for Account?"}

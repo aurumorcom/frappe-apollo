@@ -14,7 +14,10 @@ flowchart TD
     EnqueueCommSync --> CheckCommMCC{"MCC Account & Sequence ID Available?"}
     CheckCommMCC -- No --> WaitCommMCC["wait_for_event('Multi Channel Cadence on_update')"]
     WaitCommMCC -. Event Trigger .-> CheckCommMCC
-    CheckCommMCC -- Yes --> CheckCommAccountAuth{"Provider Enabled & Account Authorized?"}
+    CheckCommMCC -- Yes --> CheckCommProviderEnabled{"Provider Enabled?"}
+    CheckCommProviderEnabled -- No --> WaitCommProvider["wait_for_event('Cadence Provider on_update')"]
+    WaitCommProvider -. Event Trigger .-> CheckCommProviderEnabled
+    CheckCommProviderEnabled -- Yes --> CheckCommAccountAuth{"Account Authorized?"}
     CheckCommAccountAuth -- No --> WaitCommAuth["wait_for_event('Apollo Account on_update')"]
     WaitCommAuth -. Event Trigger .-> CheckCommAccountAuth
     CheckCommAccountAuth -- Yes --> CheckCommLeadID{"CRM Lead Apollo ID Available?"}
