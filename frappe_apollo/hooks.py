@@ -86,12 +86,12 @@ required_apps = ["frappe_controller", "frappe_cadence", "crm"]
 # ------------
 
 # before_install = "frappe_apollo.install.before_install"
-# after_install = "frappe_apollo.install.after_install"
+after_install = "frappe_apollo.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "frappe_apollo.uninstall.before_uninstall"
+before_uninstall = "frappe_apollo.uninstall.before_uninstall"
 # after_uninstall = "frappe_apollo.uninstall.after_uninstall"
 
 # Integration Setup
