@@ -58,9 +58,10 @@ class TestCadenceProvisioning(UnitTestCase):
     @patch("frappe.get_doc")
     @patch("frappe.db.get_value")
     @patch("frappe_controller.utils.controller.wait_for_event")
-    def test_provision_sequence_fail_fast_if_unauthorized(self, mock_wait_for_event, mock_db_get_value, mock_get_doc, mock_client_cls):
+    def test_provision_sequence_waits_for_provider_enablement(self, mock_wait_for_event, mock_db_get_value, mock_get_doc, mock_client_cls):
         mock_cadence = MagicMock()
         mock_cadence.cadence_name = "Test Cadence"
+        mock_cadence.modified = "2024-01-01"
         
         row1 = MagicMock()
         row1.account = "Acc1"
@@ -70,26 +71,61 @@ class TestCadenceProvisioning(UnitTestCase):
         mock_cadence.get.return_value = [row1]
         mock_get_doc.return_value = mock_cadence
         
-        # First call: Provider disabled -> calls wait_for_event
-        mock_db_get_value.side_effect = lambda dt, name, field: 0 if dt == "Cadence Provider" else "Unauthorized"
+        # Provider disabled
+        mock_db_get_value.side_effect = lambda dt, name, field: 0 if dt == "Cadence Provider" else "Authorized"
         
-        # After resumption, simulate that row is removed!
         def side_effect_reload():
-            mock_cadence.get.return_value = [] # Row removed
+            mock_cadence.get.return_value = []
         mock_cadence.reload.side_effect = side_effect_reload
         
         _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
         
-        mock_wait_for_event.assert_called_once()
+        mock_wait_for_event.assert_called_once_with(
+            "doc:Cadence Provider:Apollo:on_update",
+            condition="argument.get('enabled') == 1",
+            consider_events_since="2024-01-01"
+        )
         mock_cadence.reload.assert_called_once()
-        # Client not instantiated because of fail-fast return
         mock_client_cls.assert_not_called()
 
     @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
     @patch("frappe.get_doc")
     @patch("frappe.db.get_value")
-    @patch("frappe.db.set_value")
-    def test_provision_sequence_creates_new(self, mock_set_value, mock_db_get_value, mock_get_doc, mock_client_cls):
+    @patch("frappe_controller.utils.controller.wait_for_event")
+    def test_provision_sequence_waits_for_account_authorization(self, mock_wait_for_event, mock_db_get_value, mock_get_doc, mock_client_cls):
+        mock_cadence = MagicMock()
+        mock_cadence.cadence_name = "Test Cadence"
+        mock_cadence.modified = "2024-01-01"
+        
+        row1 = MagicMock()
+        row1.account = "Acc1"
+        row1.sender = "Sender1"
+        row1.apollo_id = None
+        
+        mock_cadence.get.return_value = [row1]
+        mock_get_doc.return_value = mock_cadence
+        
+        # Provider enabled, Account unauthorized
+        mock_db_get_value.side_effect = lambda dt, name, field: 1 if dt == "Cadence Provider" else "Unauthorized"
+        
+        def side_effect_reload():
+            mock_cadence.get.return_value = []
+        mock_cadence.reload.side_effect = side_effect_reload
+        
+        _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
+        
+        mock_wait_for_event.assert_called_once_with(
+            "doc:Apollo Account:Acc1:on_update",
+            condition="doc.status == 'Authorized'",
+            consider_events_since="2024-01-01"
+        )
+        mock_cadence.reload.assert_called_once()
+        mock_client_cls.assert_not_called()
+
+    @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
+    @patch("frappe.get_doc")
+    @patch("frappe.db.get_value")
+    def test_provision_sequence_creates_new(self, mock_db_get_value, mock_get_doc, mock_client_cls):
         mock_cadence = MagicMock()
         mock_cadence.cadence_name = "Test Cadence"
         
@@ -117,7 +153,8 @@ class TestCadenceProvisioning(UnitTestCase):
             active=True,
             emailer_steps=[]
         )
-        mock_set_value.assert_called_once_with("Cadence Apollo ID", "row1", "apollo_id", "seq_123")
+        self.assertEqual(row1.apollo_id, "seq_123")
+        mock_cadence.save.assert_called_once()
 
     @patch("frappe.get_doc")
     def test_get_sequence_steps(self, mock_get_doc):
