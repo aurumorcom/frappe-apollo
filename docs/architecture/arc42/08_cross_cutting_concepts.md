@@ -24,3 +24,7 @@ This section documents architecture-wide patterns and mechanisms across `frappe_
 ### 4. Webhook Security Verification
 - Inbound requests to `/api/method/frappe_apollo.webhook.handle` require a `Bearer` token in the `Authorization` header ([`apps/frappe_apollo/frappe_apollo/webhook.py`](apps/frappe_apollo/frappe_apollo/webhook.py:9)).
 - The endpoint queries active `Apollo Account` records and validates the bearer token before delegating execution to `process_webhook` in the FastStream background worker (`FS Job`).
+
+### 5. Setup & Lifecycle Automation
+- **Installation (`after_install`)**: Automatically provisions an `"Apollo"` record in the `Cadence Provider` DocType mapping to the `"Email"` channel to enable zero-touch setup upon installation ([`apps/frappe_apollo/frappe_apollo/install.py`](apps/frappe_apollo/frappe_apollo/install.py:6)).
+- **Uninstallation (`before_uninstall`)**: Cleans up orphan provider records prior to app removal to ensure safe infrastructure teardown ([`apps/frappe_apollo/frappe_apollo/uninstall.py`](apps/frappe_apollo/frappe_apollo/uninstall.py:6)).
