@@ -21,8 +21,8 @@ def update_a_contact(comm_name):
 	mcc = frappe.get_doc("Multi Channel Cadence", comm.reference_name)
 	if not mcc.apollo_account or not mcc.apollo_sequence_id:
 		wait_for_event(
-			event_key="doc:Multi Channel Cadence:on_update",
-			condition=f"argument.get('name') == '{mcc.name}' and argument.get('apollo_account') and argument.get('apollo_sequence_id')"
+			event_key=f"doc:Multi Channel Cadence:{mcc.name}:on_update",
+			condition=f"argument.get('apollo_account') and argument.get('apollo_sequence_id')"
 		)
 		mcc.reload()
 	
@@ -31,21 +31,21 @@ def update_a_contact(comm_name):
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
 		wait_for_event(
-			event_key="doc:Cadence Provider:on_update:Apollo",
+			event_key="doc:Cadence Provider:Apollo:on_update",
 			condition="argument.get('enabled') == 1"
 		)
 		
 	account = frappe.get_doc("Apollo Account", account_name)
 	if account.status != "Authorized":
 		wait_for_event(
-			event_key="doc:Apollo Account:on_update",
-			condition=f"argument.get('name') == '{account_name}' and argument.get('status') == 'Authorized'"
+			event_key=f"doc:Apollo Account:{account_name}:on_update",
+			condition="argument.get('status') == 'Authorized'"
 		)
 		
 	crm_lead_accounts = frappe.get_all("CRM Lead Apollo ID", filters={"parent": mcc.recipient, "account": account_name}, fields=["apollo_id"])
 	if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
 		wait_for_event(
-			event_key=f"doc:CRM Lead:on_update:{mcc.recipient}",
+			event_key=f"doc:CRM Lead:{mcc.recipient}:on_update",
 			condition=f"any(row.get('account') == '{account_name}' and row.get('apollo_id') for row in argument.get('apollo_ids', []))"
 		)
 		# fetch again after event
@@ -65,8 +65,7 @@ def update_a_contact(comm_name):
 
 	if not step_found or not step_doc.subject_field or not step_doc.message_field:
 		wait_for_event(
-			event_key="doc:Cadence:on_update",
-			condition=f"argument.get('name') == '{mcc.cadence_name}'"
+			event_key=f"doc:Cadence:{mcc.cadence_name}:on_update"
 		)
 		
 	# Wait for actual Field docs to have the mapped apollo_id for this account
@@ -79,8 +78,7 @@ def update_a_contact(comm_name):
 			
 	if not subject_apollo_id:
 		wait_for_event(
-			event_key="doc:Apollo Field:on_update",
-			condition=f"argument.get('name') == '{subject_field.name}'"
+			event_key=f"doc:Apollo Field:{subject_field.name}:on_update"
 		)
 		subject_field.reload()
 		for row in subject_field.get("apollo_ids", []):
@@ -97,8 +95,7 @@ def update_a_contact(comm_name):
 			
 	if not response_apollo_id:
 		wait_for_event(
-			event_key="doc:Apollo Field:on_update",
-			condition=f"argument.get('name') == '{response_field.name}'"
+			event_key=f"doc:Apollo Field:{response_field.name}:on_update"
 		)
 		response_field.reload()
 		for row in response_field.get("apollo_ids", []):

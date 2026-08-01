@@ -37,11 +37,22 @@ def provision_a_field(cadence_name, step_name, field_type, account_name, sender)
 	from frappe_controller.utils.controller import wait_for_event
 	
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
-	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
-	
-	if not is_enabled or account_status != "Authorized" or not row.apollo_id:
+	if not is_enabled:
 		wait_for_event(
-			f"doc:Cadence:on_update:{cadence.name}",
+			event_key="doc:Cadence Provider:Apollo:on_update",
+			condition="argument.get('enabled') == 1"
+		)
+
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
+	if account_status != "Authorized":
+		wait_for_event(
+			event_key=f"doc:Apollo Account:{account_name}:on_update",
+			condition="argument.get('status') == 'Authorized'"
+		)
+
+	if not row.apollo_id:
+		wait_for_event(
+			f"doc:Cadence:{cadence.name}:on_update",
 			condition="any(r.get('apollo_id') for r in argument.get('apollo_ids', []))",
 			consider_events_since=cadence.modified
 		)

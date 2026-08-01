@@ -27,7 +27,8 @@ class TestOAuth(IntegrationTestCase):
 	    super().tearDownClass()
 
 	def tearDown(self):
-		frappe.db.rollback()
+		frappe.db.delete("Apollo Account", {"name": "Test Account OAuth"})
+		frappe.db.commit()
 		super().tearDown()
 
 	@patch("frappe_apollo.oauth.requests.post")

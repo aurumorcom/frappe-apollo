@@ -73,12 +73,25 @@ def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 		return
 		
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
-	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
-	
-	if not is_enabled or account_status != "Authorized":
+	if not is_enabled:
 		from frappe_controller.utils.controller import wait_for_event
 		wait_for_event(
-			f"doc:Apollo Account:on_update:{account_name}",
+			"doc:Cadence Provider:Apollo:on_update",
+			condition="argument.get('enabled') == 1",
+			consider_events_since=doc.modified
+		)
+		
+		# Re-fetch document and re-validate state upon resumption (Fail Fast)
+		doc.reload()
+		row = next((r for r in doc.get("apollo_ids", []) if r.account == account_name and r.sender == sender), None)
+		if not row:
+			return
+
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
+	if account_status != "Authorized":
+		from frappe_controller.utils.controller import wait_for_event
+		wait_for_event(
+			f"doc:Apollo Account:{account_name}:on_update",
 			condition="doc.status == 'Authorized'",
 			consider_events_since=doc.modified
 		)
@@ -118,7 +131,9 @@ def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 			doc.reload()
 			row = next((r for r in doc.get("apollo_ids", []) if r.account == account_name and r.sender == sender), None)
 			if row:
-				frappe.db.set_value(row.doctype, row.name, "apollo_id", apollo_id)
+				row.apollo_id = apollo_id
+				doc.flags.ignore_permissions = True
+				doc.save()
 	except Exception as e:
 		frappe.log_error(f"Failed to create Apollo sequence for Cadence {cadence_name}", str(e))
 

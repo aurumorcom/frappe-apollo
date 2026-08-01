@@ -135,9 +135,6 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
         apollo_id = cadence.apollo_ids[0].apollo_id
         self.assertIsNotNone(apollo_id)
 
-        from frappe_apollo.integrations.apollo import ApolloClient
-        client = ApolloClient(self.account_name)
-        
         # Verify sequence steps setup: prefix was stripped
         seq_res = client.search_sequences(q_name="Test VCR Provisioning Cadence - Administrator")
         campaigns = seq_res.get("emailer_campaigns", [])
@@ -207,8 +204,6 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
             archive_sequence(data["account"], data["apollo_id"])
         
         seq_res = client.search_sequences(q_name="Test VCR Provisioning Cadence - Administrator")
-        # Apollo's search might not return archived sequences, or it might.
-        # If it returns empty, it's effectively archived/deleted from normal views.
         campaigns = seq_res.get("emailer_campaigns", [])
         if campaigns:
             self.assertTrue(campaigns[0].get("archived"))

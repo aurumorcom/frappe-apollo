@@ -45,15 +45,15 @@ def _create_a_contact(mcc_name):
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
 		wait_for_event(
-			event_key="doc:Cadence Provider:on_update:Apollo",
+			event_key="doc:Cadence Provider:Apollo:on_update",
 			condition="argument.get('enabled') == 1"
 		)
 
 	account = frappe.get_doc("Apollo Account", account_name)
 	if account.status != "Authorized":
 		wait_for_event(
-			event_key="doc:Apollo Account:on_update",
-			condition=f"argument.get('name') == '{account_name}' and argument.get('status') == 'Authorized'"
+			event_key=f"doc:Apollo Account:{account_name}:on_update",
+			condition="argument.get('status') == 'Authorized'"
 		)
 
 	# Ensure the CRM Lead has an entry for this account in apollo_ids
@@ -80,7 +80,7 @@ def _create_a_contact(mcc_name):
 			)
 
 			wait_for_event(
-				event_key=f"doc:CRM Lead:on_update:{lead_name}",
+				event_key=f"doc:CRM Lead:{lead_name}:on_update",
 				condition=f"any(row.get('account') == '{account_name}' and row.get('apollo_id') for row in argument.get('apollo_ids', []))",
 				consider_events_since=lead.modified
 			)
@@ -96,11 +96,14 @@ def _create_a_contact(mcc_name):
 
 def create_a_contact(lead_name, account_name):
 	from frappe_apollo.integrations.apollo import ApolloClient
-	from frappe_controller.utils.controller import SuspendJob
+	from frappe_controller.utils.controller import wait_for_event, SuspendJob
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		raise SuspendJob("Apollo Cadence Provider is disabled.")
+		wait_for_event(
+			event_key="doc:Cadence Provider:Apollo:on_update",
+			condition="argument.get('enabled') == 1"
+		)
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
@@ -131,11 +134,14 @@ def create_a_contact(lead_name, account_name):
 
 def update_a_contact(lead_name, account_name):
 	from frappe_apollo.integrations.apollo import ApolloClient
-	from frappe_controller.utils.controller import SuspendJob
+	from frappe_controller.utils.controller import wait_for_event, SuspendJob
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		raise SuspendJob("Apollo Cadence Provider is disabled.")
+		wait_for_event(
+			event_key="doc:Cadence Provider:Apollo:on_update",
+			condition="argument.get('enabled') == 1"
+		)
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":

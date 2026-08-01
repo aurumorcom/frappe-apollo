@@ -68,8 +68,8 @@ class TestCommunicationOverride(UnitTestCase):
             update_a_contact("Comm-1")
 
         mock_wait.assert_called_once_with(
-            event_key="doc:Multi Channel Cadence:on_update",
-            condition=f"argument.get('name') == '{mock_mcc.name}' and argument.get('apollo_account') and argument.get('apollo_sequence_id')"
+            event_key=f"doc:Multi Channel Cadence:{mock_mcc.name}:on_update",
+            condition="argument.get('apollo_account') and argument.get('apollo_sequence_id')"
         )
 
     @patch("frappe_apollo.apollo.doctype.communication.communication.wait_for_event")
@@ -107,7 +107,7 @@ class TestCommunicationOverride(UnitTestCase):
             update_a_contact("Comm-1")
 
         mock_wait.assert_called_once_with(
-            event_key="doc:CRM Lead:on_update:Lead-1",
+            event_key="doc:CRM Lead:Lead-1:on_update",
             condition="any(row.get('account') == 'Acc-1' and row.get('apollo_id') for row in argument.get('apollo_ids', []))"
         )
 
