@@ -33,7 +33,7 @@ flowchart TD
     CheckMessageFieldID -- No --> WaitMessageField["wait_for_event('Apollo Field on_update')"]
     WaitMessageField -. Event Trigger .-> CheckMessageFieldID
     CheckMessageFieldID -- Yes --> PatchContactAPI["ApolloClient update_contact(custom_fields)"]
-    PatchContactAPI --> MarkSynced["Set Communication apollo_sync_status = 'Synced'"]
+    PatchContactAPI --> MarkSynced["Set Communication apollo_status = 'Scheduled'"]
     MarkSynced --> EndCommSync(["Communication Custom Fields Synced"])
 ```
 
