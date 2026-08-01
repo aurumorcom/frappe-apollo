@@ -74,7 +74,7 @@ push = true
 "pyproject.toml" = [
     'current_version = "{version}"',
 ]
-"frappe_cadence/__init__.py" = [
+"frappe_apollo/__init__.py" = [
     '__version__ = "{version}"',
 ]
 
