@@ -5,53 +5,51 @@ from frappe_apollo.webhook import handle, process_webhook
 from frappe.exceptions import AuthenticationError
 
 class TestWebhookIntegration(IntegrationTestCase):
-    @classmethod
-    def tearDownClass(cls):
-        frappe.db.rollback()
-        super().tearDownClass()
-
     def setUp(self):
         super().setUp()
+        frappe.db.rollback()
 
-        # Create base records
-        frappe.get_doc({
-            "doctype": "Apollo Account",
-            "account_name": "Webhook Account",
-            "webhook_bearer_token": "valid_token"
-        }).insert(ignore_permissions=True)
+        lead_email = f"webhook_{frappe.generate_hash(length=6)}@example.com"
+        account_name = f"Webhook Account {frappe.generate_hash(length=6)}"
+        cadence_name = f"Webhook Cadence {frappe.generate_hash(length=6)}"
 
         lead = frappe.get_doc({
             "doctype": "CRM Lead",
             "first_name": "Webhook",
-            "email": "webhook@example.com"
+            "email": lead_email
+        }).insert(ignore_permissions=True)
+
+        account = frappe.get_doc({
+            "doctype": "Apollo Account",
+            "account_name": account_name,
+            "webhook_bearer_token": "valid_token"
         }).insert(ignore_permissions=True)
 
         lead.append("apollo_ids", {
-            "account": "Webhook Account",
+            "account": account.account_name,
             "apollo_id": "contact_123"
         })
         lead.save(ignore_permissions=True)
 
         cadence = frappe.get_doc({
             "doctype": "Cadence",
-            "cadence_name": "Webhook Cadence"
+            "cadence_name": cadence_name
         }).insert(ignore_permissions=True)
 
         mcc = frappe.get_doc({
             "doctype": "Multi Channel Cadence",
-            "name": "MCC-Webhook",
             "recipient": lead.name,
             "sender": "sender@example.com",
             "cadence_name": cadence.name,
             "start_date": "2024-01-01"
         }).insert(ignore_permissions=True, ignore_links=True)
-        
+
         self.lead_name = lead.name
         self.mcc_name = mcc.name
         self.cadence_name = cadence.name
+        self.addCleanup(frappe.db.rollback)
 
     def tearDown(self):
-        frappe.db.rollback()
         super().tearDown()
 
     @patch("frappe.get_request_header")
