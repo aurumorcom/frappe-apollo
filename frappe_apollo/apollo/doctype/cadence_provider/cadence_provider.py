@@ -8,7 +8,7 @@ def on_update(doc, method=None):
 		from frappe_controller.utils.background_jobs import enqueue
 		for cadence_name in unique_cadences:
 			enqueue(
-				method="frappe_apollo.apollo.doctype.field.field.provision_cadence_fields",
+				method="frappe_apollo.apollo.doctype.apollo_field.apollo_field.enqueue_provision_cadence_fields",
 				queue="low",
 				cadence_name=cadence_name
 			)

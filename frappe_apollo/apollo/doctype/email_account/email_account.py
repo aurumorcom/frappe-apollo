@@ -8,7 +8,7 @@ def queue_get_email_accounts():
     accounts = frappe.get_all("Apollo Account", fields=["name"])
     for acc in accounts:
         doc = frappe.get_doc("Apollo Account", acc.name)
-        if doc.get_password("api_key"):
+        if doc.get_password("api_key", raise_exception=False) or doc.access_token:
             frappe.enqueue(
                 method="frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts",
                 queue="low",

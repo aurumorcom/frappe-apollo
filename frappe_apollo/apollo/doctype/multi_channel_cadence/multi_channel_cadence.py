@@ -102,9 +102,16 @@ def _assign_contact_to_sequence(mcc_name):
 	if mcc.status not in ["Scheduled", "In Progress", "Active"]:
 		return
 
+	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
+	if not is_enabled:
+		wait_for_event(
+			event_key="doc:Cadence Provider:Apollo:on_update",
+			condition="argument.get('enabled') == 1"
+		)
+
 	if not mcc.apollo_account or not mcc.apollo_sequence_id:
 		wait_for_event(
-			event_key=f"doc:Cadence:on_update:{mcc.cadence_name}",
+			event_key=f"doc:Cadence:{mcc.cadence_name}:on_update",
 			condition=f"any(row.get('sender') == '{mcc.sender}' and row.get('status') == 'Active' and row.get('apollo_id') for row in argument.get('apollo_ids', []))",
 			consider_events_since=mcc.modified
 		)
