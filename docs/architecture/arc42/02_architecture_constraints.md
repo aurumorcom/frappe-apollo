@@ -16,5 +16,7 @@ This section lists technical, organizational, and regulatory constraints imposed
 
 | Constraint | Detail |
 | :--- | :--- |
+| **Apollo Account Limits (Free Tier)** | Free Apollo accounts are strictly limited to 2 active sequences and 1 mailbox per account. The system must support provisioning the same cadence across multiple free Apollo accounts to bypass this limit. |
+| **Apollo Account Limits (Paid Tier)** | Paid Apollo accounts support multiple mailboxes per account. The system must support mapping a single cadence to one paid account utilizing multiple sender mailboxes. |
 | **Multi-Tenancy** | Accounts are namespaced per Frappe site. Multi-account mapping is required to support multiple sales accounts per site. |
 | **Security & Privacy** | API Keys, OAuth Secrets, and Webhook Bearer Tokens must be stored as encrypted `Password` field types ([`apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.json`](apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.json:38)). |
