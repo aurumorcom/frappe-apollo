@@ -160,7 +160,7 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
         mock_wait.assert_called_once()
         self.assertEqual(mock_wait.call_args[0][0], "doc:Apollo Account:TestAccount1:on_update")
-        self.assertEqual(mock_wait.call_args[1]["condition"], "doc.status == 'Authorized'")
+        self.assertEqual(mock_wait.call_args[1]["condition"], "argument.get('status') == 'Authorized'")
 
     @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
     def test_provision_sequence_creates_sequence_and_saves_doc(self, mock_client_cls):
@@ -204,7 +204,7 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
         mock_wait.assert_called_once()
         self.assertEqual(mock_wait.call_args[0][0], f"doc:Cadence:{cadence.name}:on_update")
-        self.assertEqual(mock_wait.call_args[1]["condition"], "any(r.get('apollo_id') for r in argument.get('apollo_ids', []))")
+        self.assertEqual(mock_wait.call_args[1]["condition"], f"any(r.get('account') == 'TestAccount1' and r.get('sender') == 'test_sender@example.com' and r.get('apollo_id') for r in argument.get('apollo_ids', []))")
 
     @patch("frappe_apollo.integrations.apollo.ApolloClient")
     def test_provision_fields_creates_apollo_fields_and_attaches_to_steps(self, mock_client_cls):
