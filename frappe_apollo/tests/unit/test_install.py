@@ -1,9 +1,9 @@
-import unittest
+from frappe.tests import UnitTestCase
 from unittest.mock import patch, MagicMock
 from frappe_apollo.install import after_install
 
 
-class TestInstall(unittest.TestCase):
+class TestInstall(UnitTestCase):
 
 	@patch("frappe_apollo.install.frappe")
 	def test_after_install_creates_apollo_provider_when_missing(self, mock_frappe):

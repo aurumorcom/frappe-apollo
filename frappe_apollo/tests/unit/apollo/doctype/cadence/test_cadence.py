@@ -116,7 +116,7 @@ class TestCadenceProvisioning(UnitTestCase):
         
         mock_wait_for_event.assert_called_once_with(
             "doc:Apollo Account:Acc1:on_update",
-            condition="doc.status == 'Authorized'",
+            condition="argument.get('status') == 'Authorized'",
             consider_events_since="2024-01-01"
         )
         mock_cadence.reload.assert_called_once()
