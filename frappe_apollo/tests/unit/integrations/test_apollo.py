@@ -116,10 +116,11 @@ class TestApolloClient(UnitTestCase):
         self.assertIn("params", last_call_kwargs)
         self.assertNotIn("json", last_call_kwargs)
 
+    @patch("frappe.log_error")
     @patch("frappe.db.commit")
     @patch("frappe.get_doc")
     @patch("frappe_apollo.integrations.apollo.requests.post")
-    def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit):
+    def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit, mock_log_error):
         mock_account = MagicMock()
         mock_account.get_password.return_value = "token"
         mock_get_doc.return_value = mock_account
