@@ -240,9 +240,12 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
         frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Authorized")
 
         mock_client = mock_client_cls.return_value
+        mock_client.create_custom_field.return_value = {"typed_custom_fields": [{"id": "custom_field_555"}]}
 
         step_name = cadence.cadence_schedules[0].name
-        with patch("frappe_apollo.integrations.apollo.ApolloClient"):
+        with patch("frappe_apollo.integrations.apollo.ApolloClient") as inner_client_cls:
+            inner_client = inner_client_cls.return_value
+            inner_client.create_custom_field.return_value = {"typed_custom_fields": [{"id": "custom_field_555"}]}
             provision_a_field(cadence.name, step_name, "subject", "TestAccount1", "test_sender@example.com")
             provision_a_field(cadence.name, step_name, "message", "TestAccount1", "test_sender@example.com")
 
