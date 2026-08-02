@@ -63,11 +63,15 @@ def update_a_contact(comm_name):
 				step_doc = sch
 				break
 
-	if not step_found or not step_doc.subject_field or not step_doc.message_field:
+	if not step_found or not step_doc or not step_doc.subject_field or not step_doc.message_field:
 		wait_for_event(
 			event_key=f"doc:Cadence:{mcc.cadence_name}:on_update"
 		)
-		
+		cadence = frappe.get_doc("Cadence", mcc.cadence_name)
+		step_doc = next((sch for sch in cadence.cadence_schedules if sch.name == comm.cadence_schedule), None)
+		if not step_doc or not step_doc.subject_field or not step_doc.message_field:
+			raise SuspendJob("Cadence schedule step or fields missing.")
+
 	# Wait for actual Field docs to have the mapped apollo_id for this account
 	subject_field = frappe.get_doc("Apollo Field", step_doc.subject_field)
 	subject_apollo_id = None
@@ -75,33 +79,39 @@ def update_a_contact(comm_name):
 		if row.account == account_name and row.apollo_sequence_id == mcc.apollo_sequence_id:
 			subject_apollo_id = row.apollo_id
 			break
-			
+
 	if not subject_apollo_id:
 		wait_for_event(
-			event_key=f"doc:Apollo Field:{subject_field.name}:on_update"
+			event_key=f"doc:Apollo Field:{subject_field.name}:on_update",
+			condition=f"any(r.get('account') == '{account_name}' and r.get('apollo_sequence_id') == '{mcc.apollo_sequence_id}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))"
 		)
 		subject_field.reload()
 		for row in subject_field.get("apollo_ids", []):
 			if row.account == account_name and row.apollo_sequence_id == mcc.apollo_sequence_id:
 				subject_apollo_id = row.apollo_id
 				break
-		
+		if not subject_apollo_id:
+			raise SuspendJob("Subject field Apollo ID missing.")
+
 	response_field = frappe.get_doc("Apollo Field", step_doc.message_field)
 	response_apollo_id = None
 	for row in response_field.get("apollo_ids", []):
 		if row.account == account_name and row.apollo_sequence_id == mcc.apollo_sequence_id:
 			response_apollo_id = row.apollo_id
 			break
-			
+
 	if not response_apollo_id:
 		wait_for_event(
-			event_key=f"doc:Apollo Field:{response_field.name}:on_update"
+			event_key=f"doc:Apollo Field:{response_field.name}:on_update",
+			condition=f"any(r.get('account') == '{account_name}' and r.get('apollo_sequence_id') == '{mcc.apollo_sequence_id}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))"
 		)
 		response_field.reload()
 		for row in response_field.get("apollo_ids", []):
 			if row.account == account_name and row.apollo_sequence_id == mcc.apollo_sequence_id:
 				response_apollo_id = row.apollo_id
 				break
+		if not response_apollo_id:
+			raise SuspendJob("Message field Apollo ID missing.")
 		
 	custom_fields = {
 		subject_apollo_id: comm.subject,

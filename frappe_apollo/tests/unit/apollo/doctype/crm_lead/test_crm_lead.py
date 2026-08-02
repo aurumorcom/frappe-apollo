@@ -42,6 +42,7 @@ class TestCRMLead(UnitTestCase):
         mcc.sender = "sender"
         mcc.recipient = "lead1"
         mcc.cadence = "cad1"
+        mcc.apollo_account = "Acc1"
         
         cadence = MagicMock()
         cadence.get.return_value = [{"reference_doctype": "Email Template"}] # 1 expected comm
@@ -94,6 +95,7 @@ class TestCRMLead(UnitTestCase):
         mcc.sender = "sender"
         mcc.recipient = "lead1"
         mcc.cadence = "cad1"
+        mcc.apollo_account = "Acc1"
         
         cadence = MagicMock()
         cadence.get.return_value = [{"reference_doctype": "Email Template"}]
@@ -155,3 +157,70 @@ class TestCRMLead(UnitTestCase):
             "email": "john@example.com",
             "organization_name": "Acme"
         })
+
+    @patch("frappe.get_doc")
+    @patch("frappe.db.count")
+    @patch("frappe.db.get_value")
+    @patch("frappe.enqueue")
+    @patch("frappe_controller.utils.controller.wait_for_event")
+    def test_create_a_contact_refetches_email_account_name_after_resumption(self, mock_wait, mock_enqueue, mock_get_value, mock_count, mock_get_doc):
+        mcc = MagicMock()
+        mcc.name = "mcc1"
+        mcc.status = "Scheduled"
+        mcc.sender = "sender1"
+        mcc.recipient = "lead1"
+        mcc.cadence_name = "cad1"
+        mcc.apollo_account = "Acc2"
+
+        cadence = MagicMock()
+        cadence.get.return_value = [{"reference_doctype": "Email Template"}]
+
+        email_acc = MagicMock()
+        email_acc.apollo_ids = [MagicMock(account="Acc1"), MagicMock(account="Acc2")]
+
+        lead = MagicMock()
+        lead.get.return_value = [MagicMock(account="Acc2", apollo_id=None)]
+
+        mock_get_doc.side_effect = lambda dt, name: mcc if dt == "Multi Channel Cadence" else (cadence if dt == "Cadence" else (email_acc if dt == "Email Account" else lead))
+        mock_count.return_value = 1
+
+        user_email_calls = []
+        def get_value_side_effect(dt, name_or_filters=None, *args):
+            if dt == "User Email":
+                user_email_calls.append(1)
+                return "EmailAcc1" if len(user_email_calls) > 1 else None
+            if dt == "Cadence Provider":
+                return 1
+            if dt == "Apollo Account":
+                return "Authorized"
+            return None
+        mock_get_value.side_effect = get_value_side_effect
+
+        def wait_side_effect(*args, **kwargs):
+            return None # Simulate resumption
+        mock_wait.side_effect = wait_side_effect
+
+        _create_a_contact("mcc1")
+
+        # Verify User Email was queried again after wait
+        user_email_calls = [c for c in mock_get_value.call_args_list if c[0][0] == "User Email"]
+        self.assertGreaterEqual(len(user_email_calls), 2, "email_account_name was not re-fetched after resumption")
+
+    @patch("frappe.get_doc")
+    @patch("frappe.db.get_value")
+    @patch("frappe_controller.utils.controller.wait_for_event")
+    def test_create_a_contact_registers_event_listener_when_account_unauthorized(self, mock_wait, mock_get_value, mock_get_doc):
+        def get_value_side_effect(dt, name_or_filters=None, *args):
+            if dt == "Cadence Provider": return 1
+            if dt == "Apollo Account": return "Unauthorized"
+            return None
+        mock_get_value.side_effect = get_value_side_effect
+        mock_wait.side_effect = SuspendJob("suspend")
+
+        with self.assertRaises(SuspendJob):
+            create_a_contact("lead1", "Acc_Unauthorized")
+
+        mock_wait.assert_called_once_with(
+            event_key="doc:Apollo Account:Acc_Unauthorized:on_update",
+            condition="argument.get('status') == 'Authorized'"
+        )

@@ -34,12 +34,30 @@ def _create_a_contact(mcc_name):
 			event_key="doc:User Email:after_insert",
 			condition=f"argument.get('parent') == '{sender}'"
 		)
+		mcc.reload()
+		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
+			return
+		email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
+
+	if not email_account_name:
+		return
 
 	email_account = frappe.get_doc("Email Account", email_account_name)
-	if not email_account.get("apollo_ids"):
-		raise Exception("No Apollo Account mapped to this Email Account.")
+	target_account = mcc.apollo_account
+	if not target_account and email_account.get("apollo_ids"):
+		target_account = email_account.apollo_ids[0].account
 
-	account_name = email_account.apollo_ids[0].account
+	if not target_account or not email_account.get("apollo_ids"):
+		wait_for_event(
+			event_key=f"doc:Email Account:{email_account_name}:on_update",
+			condition="any(r.get('apollo_id') for r in argument.get('apollo_ids', []))"
+		)
+		email_account.reload()
+		target_account = mcc.apollo_account or (email_account.apollo_ids[0].account if email_account.get("apollo_ids") else None)
+		if not target_account:
+			raise Exception("No Apollo Account mapped to this Email Account.")
+
+	account_name = target_account
 
 	# Wait for Apollo Settings & Account
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
@@ -107,7 +125,13 @@ def create_a_contact(lead_name, account_name):
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
-		raise SuspendJob("Apollo Account is not Authorized.")
+		wait_for_event(
+			event_key=f"doc:Apollo Account:{account_name}:on_update",
+			condition="argument.get('status') == 'Authorized'"
+		)
+		account_status = frappe.db.get_value("Apollo Account", account_name, "status")
+		if account_status != "Authorized":
+			raise SuspendJob("Apollo Account is not Authorized.")
 
 	lead = frappe.get_doc("CRM Lead", lead_name)
 
@@ -145,7 +169,13 @@ def update_a_contact(lead_name, account_name):
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
-		raise SuspendJob("Apollo Account is not Authorized.")
+		wait_for_event(
+			event_key=f"doc:Apollo Account:{account_name}:on_update",
+			condition="argument.get('status') == 'Authorized'"
+		)
+		account_status = frappe.db.get_value("Apollo Account", account_name, "status")
+		if account_status != "Authorized":
+			raise SuspendJob("Apollo Account is not Authorized.")
 
 	lead = frappe.get_doc("CRM Lead", lead_name)
 	

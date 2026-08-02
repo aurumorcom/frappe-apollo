@@ -1,9 +1,9 @@
-import unittest
+from frappe.tests import UnitTestCase
 from unittest.mock import patch
 from frappe_apollo.uninstall import before_uninstall
 
 
-class TestUninstall(unittest.TestCase):
+class TestUninstall(UnitTestCase):
 
 	@patch("frappe_apollo.uninstall.frappe")
 	def test_before_uninstall_removes_apollo_provider(self, mock_frappe):

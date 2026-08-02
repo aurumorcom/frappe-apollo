@@ -53,7 +53,7 @@ def provision_a_field(cadence_name, step_name, field_type, account_name, sender)
 	if not row.apollo_id:
 		wait_for_event(
 			f"doc:Cadence:{cadence.name}:on_update",
-			condition="any(r.get('apollo_id') for r in argument.get('apollo_ids', []))",
+			condition=f"any(r.get('account') == '{account_name}' and r.get('sender') == '{sender}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))",
 			consider_events_since=cadence.modified
 		)
 		

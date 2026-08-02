@@ -4,7 +4,11 @@
 
 ## Requirements Overview
 
-The system bridges local CRM leads, outreach cadences, and scheduled communications with Apollo sequences, contacts, mailboxes, and custom fields.
+The primary business goal of this project is to utilize Apollo.io as the engine for cold email campaigns. Because Apollo enforces strict platform limits (especially on free tiers), the system must support flexible account configurations to maximize throughput:
+- **Free Account Workaround**: Load balance campaigns across multiple free Apollo accounts, each configured with a single sender mailbox and constrained to a maximum of 2 active sequences per account.
+- **Paid Account Utilization**: Support a single paid Apollo account configured with multiple sender mailboxes for centralized campaign execution.
+
+The system bridges local CRM leads, outreach cadences, and scheduled communications with Apollo sequences, contacts, mailboxes, and custom fields to accommodate these configurations.
 
 ### Key Functional Requirements
 - **OAuth 2.0 & API Key Authentication**: Securely connect Apollo workspace accounts via OAuth callback or API Key ([`apps/frappe_apollo/frappe_apollo/oauth.py`](apps/frappe_apollo/frappe_apollo/oauth.py:7)).

@@ -88,3 +88,32 @@ class TestMultiChannelCadence(UnitTestCase):
             _assign_contact_to_sequence("mcc1")
         
         mock_wait.assert_called_once()
+
+    @patch("frappe.get_doc")
+    @patch("frappe.db.get_value")
+    @patch("frappe.get_all")
+    @patch("frappe_apollo.integrations.apollo.ApolloClient")
+    @patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+    def test_assign_contact_waits_when_email_account_unmapped(self, mock_wait, mock_client_cls, mock_get_all, mock_get_value, mock_get_doc):
+        mcc = MagicMock()
+        mcc.status = "Scheduled"
+        mcc.apollo_account = "Acc1"
+        mcc.apollo_sequence_id = "seq1"
+        mcc.sender = "sender1"
+
+        email_acc = MagicMock()
+        email_acc.name = "EmailAcc1"
+        email_acc.get.return_value = [] # Empty apollo_ids initially
+
+        mock_get_doc.side_effect = lambda dt, name: mcc if dt == "Multi Channel Cadence" else email_acc
+        mock_get_value.side_effect = lambda dt, *args: 1 if dt == "Cadence Provider" else "EmailAcc1"
+
+        mock_wait.side_effect = SuspendJob("wait_for_mailbox")
+
+        with self.assertRaises(SuspendJob):
+            _assign_contact_to_sequence("mcc1")
+
+        mock_wait.assert_called_once_with(
+            event_key="doc:Email Account:EmailAcc1:on_update",
+            condition="any(row.get('account') == 'Acc1' and row.get('apollo_id') for row in argument.get('apollo_ids', []))"
+        )

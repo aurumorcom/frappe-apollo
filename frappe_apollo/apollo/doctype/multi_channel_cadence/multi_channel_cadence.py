@@ -135,18 +135,28 @@ def _assign_contact_to_sequence(mcc_name):
 			return
 		email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
 		
-	email_account = frappe.get_doc("Email Account", email_account_name)
-	if not email_account.get("apollo_ids"):
-		raise Exception("No Apollo Account mapped to this Email Account.")
-	
-	# Find mailbox matching the mcc's apollo_account
 	account_name = mcc.apollo_account
+	email_account = frappe.get_doc("Email Account", email_account_name)
+
 	apollo_mailbox_id = None
 	for row in email_account.get("apollo_ids", []):
-		if row.account == account_name:
+		if row.account == account_name and row.apollo_id:
 			apollo_mailbox_id = row.apollo_id
 			break
-			
+
+	if not apollo_mailbox_id:
+		wait_for_event(
+			event_key=f"doc:Email Account:{email_account_name}:on_update",
+			condition=f"any(row.get('account') == '{account_name}' and row.get('apollo_id') for row in argument.get('apollo_ids', []))"
+		)
+		email_account.reload()
+		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
+			return
+		for row in email_account.get("apollo_ids", []):
+			if row.account == account_name and row.apollo_id:
+				apollo_mailbox_id = row.apollo_id
+				break
+
 	if not apollo_mailbox_id:
 		raise Exception(f"No Apollo Mailbox mapped for account {account_name}.")
 	

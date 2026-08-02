@@ -10,6 +10,14 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.account_name = frappe.conf.get("apollo_test_account") or os.environ.get("APOLLO_TEST_ACCOUNT")
+        if cls.account_name and frappe.db.exists("Apollo Account", cls.account_name):
+            doc = frappe.get_doc("Apollo Account", cls.account_name)
+            try:
+                if not doc.get_password("api_key") and not doc.access_token:
+                    cls.account_name = None
+            except Exception:
+                cls.account_name = None
+
         if not cls.account_name:
             cls.account_name = "Dummy VCR Account"
 

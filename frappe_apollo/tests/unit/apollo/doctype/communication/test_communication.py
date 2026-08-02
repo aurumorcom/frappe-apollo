@@ -191,3 +191,47 @@ class TestCommunicationOverride(UnitTestCase):
         
         mock_comm.db_set.assert_any_call("apollo_id", "apollo-person-1")
         mock_comm.db_set.assert_any_call("apollo_status", "Scheduled")
+
+    @patch("frappe_apollo.apollo.doctype.communication.communication.wait_for_event")
+    @patch("frappe.get_all")
+    @patch("frappe.db.get_value")
+    @patch("frappe.get_doc")
+    def test_update_a_contact_field_wait_condition_and_none_key_prevention(self, mock_get_doc, mock_get_value, mock_get_all, mock_wait):
+        from frappe_controller.utils.controller import SuspendJob
+
+        mock_comm = MagicMock()
+        mock_comm.get.return_value = None
+        mock_comm.cadence_schedule = "Sch-1"
+
+        mock_mcc = MagicMock(sender="user@example.com", cadence_name="Cad-1", recipient="Lead-1", apollo_account="Acc-1", apollo_sequence_id="Seq-1")
+        mock_account = MagicMock(status="Authorized")
+
+        mock_cadence = MagicMock()
+        mock_sch = MagicMock(subject_field="sf-1", message_field="rf-1")
+        mock_sch.name = "Sch-1"
+        mock_cadence.cadence_schedules = [mock_sch]
+
+        mock_subject_field = MagicMock()
+        mock_subject_field.name = "sf-1"
+        mock_subject_field.get.return_value = [] # Unmapped
+
+        mock_get_doc.side_effect = [
+            mock_comm,
+            mock_mcc,
+            mock_account,
+            mock_cadence,
+            mock_subject_field
+        ]
+        mock_get_value.side_effect = lambda dt, *args: 1 if dt == "Cadence Provider" else None
+        mock_get_all.side_effect = lambda dt, *args, **kwargs: [MagicMock(apollo_id="p-1")] if dt == "CRM Lead Apollo ID" else []
+
+        mock_wait.side_effect = SuspendJob("wait_for_field")
+
+        with self.assertRaises(SuspendJob):
+            update_a_contact("Comm-1")
+
+        # Verify wait_for_event uses specific condition checking account and sequence ID
+        mock_wait.assert_called_with(
+            event_key="doc:Apollo Field:sf-1:on_update",
+            condition="any(r.get('account') == 'Acc-1' and r.get('apollo_sequence_id') == 'Seq-1' and r.get('apollo_id') for r in argument.get('apollo_ids', []))"
+        )
