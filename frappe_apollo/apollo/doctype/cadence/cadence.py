@@ -92,7 +92,7 @@ def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 		from frappe_controller.utils.controller import wait_for_event
 		wait_for_event(
 			f"doc:Apollo Account:{account_name}:on_update",
-			condition="doc.status == 'Authorized'",
+			condition="argument.get('status') == 'Authorized'",
 			consider_events_since=doc.modified
 		)
 		
