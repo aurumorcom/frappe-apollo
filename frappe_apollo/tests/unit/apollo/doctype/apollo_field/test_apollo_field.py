@@ -130,3 +130,45 @@ class TestField(UnitTestCase):
             provision_a_field("Cad1", "step1", "subject", "Acc1", "Sender1")
             
         mock_wait.assert_called_once()
+
+    @patch("frappe_apollo.integrations.apollo.ApolloClient")
+    @patch("frappe.db.get_value")
+    @patch("frappe.get_doc")
+    @patch("frappe.log_error")
+    def test_provision_a_field_re_raises_exception(self, mock_log_error, mock_get_doc, mock_get_value, mock_client_cls):
+        mock_client = mock_client_cls.return_value
+        mock_client.create_custom_field.side_effect = Exception("API custom field error")
+
+        mock_cadence = MagicMock()
+        mock_cadence.name = "Cad1"
+        mock_apollo_id_row = MagicMock(status="Active", account="Acc1", sender="Sender1", apollo_id="seq123")
+        mock_step = MagicMock(name="step1", subject_field="old")
+
+        def mock_get_side_effect(k, d=[]):
+            if k == "apollo_ids": return [mock_apollo_id_row]
+            if k == "cadence_schedules": return [mock_step]
+            return d
+        mock_cadence.get.side_effect = mock_get_side_effect
+
+        def mock_get_doc_side_effect(doctype, *args, **kwargs):
+            if doctype == "Cadence":
+                return mock_cadence
+            if doctype == "Apollo Field" and args and isinstance(args[0], str):
+                raise DoesNotExistError()
+            elif isinstance(doctype, dict) and doctype.get("doctype") == "Apollo Field":
+                doc = MagicMock()
+                doc.name = "new_field"
+                doc.get.return_value = []
+                doc.insert.return_value = doc
+                doc.label = "lbl1"
+                doc.field_type = "string"
+                return doc
+            return MagicMock()
+
+        mock_get_doc.side_effect = mock_get_doc_side_effect
+        mock_get_value.side_effect = lambda dt, name, field: 1 if dt == "Cadence Provider" else "Authorized"
+
+        with self.assertRaises(Exception):
+            provision_a_field("Cad1", "step1", "subject", "Acc1", "Sender1")
+
+        mock_log_error.assert_called_once_with(title="Apollo Field Creation Failed", message="API custom field error")
