@@ -12,7 +12,15 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		# Use the account provided by the user via site_config or environment variable
 		cls.account_name = frappe.conf.get("apollo_test_account") or os.environ.get("APOLLO_TEST_ACCOUNT")
 		cls.sequence_id = frappe.conf.get("apollo_test_sequence_id") or os.environ.get("APOLLO_TEST_SEQUENCE_ID")
-		
+
+		if cls.account_name and frappe.db.exists("Apollo Account", cls.account_name):
+			doc = frappe.get_doc("Apollo Account", cls.account_name)
+			try:
+				if not doc.get_password("api_key") and not doc.access_token:
+					cls.account_name = None
+			except Exception:
+				cls.account_name = None
+
 		# If no real credentials are provided, use dummy ones for VCR replay
 		if not cls.account_name:
 			cls.account_name = "Dummy VCR Account"
@@ -27,13 +35,14 @@ class TestApolloExternalAPI(IntegrationTestCase):
 
 	def setUp(self):
 		super().setUp()
-		if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Apollo Account", self.account_name):
+		if not frappe.db.exists("Apollo Account", self.account_name):
 			frappe.get_doc({
 				"doctype": "Apollo Account",
 				"account_name": self.account_name,
 				"api_key": "dummy_api_key_for_vcr",
 				"client_id": "dummy_client_id",
-				"client_secret": "dummy_client_secret"
+				"client_secret": "dummy_client_secret",
+				"status": "Authorized"
 			}).insert()
 		self.client = ApolloClient(self.account_name)
 
