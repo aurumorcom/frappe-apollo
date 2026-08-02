@@ -115,20 +115,20 @@ class ApolloClient:
 			"Cache-Control": "no-cache",
 			"Content-Type": "application/json"
 		}
-		api_key = self.account.get_password("api_key")
+		api_key = self.account.get_password("api_key", raise_exception=False)
 		if api_key:
 			headers["X-Api-Key"] = api_key
 		elif self.account.access_token:
-			headers["Authorization"] = f"Bearer {self.account.get_password('access_token')}"
+			headers["Authorization"] = f"Bearer {self.account.get_password('access_token', raise_exception=False)}"
 		return headers
 
 	def _refresh_oauth_token(self):
 		url = "https://app.apollo.io/api/v1/oauth/token"
 		payload = {
 			"grant_type": "refresh_token",
-			"refresh_token": self.account.get_password("refresh_token"),
+			"refresh_token": self.account.get_password("refresh_token", raise_exception=False),
 			"client_id": self.account.client_id,
-			"client_secret": self.account.get_password("client_secret")
+			"client_secret": self.account.get_password("client_secret", raise_exception=False)
 		}
 		response = requests.post(url, data=payload)
 		try:
