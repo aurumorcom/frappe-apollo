@@ -47,6 +47,7 @@ def update_sequence(cadence_name, account_name, is_enabled):
 			client.abort_sequence(row.apollo_id)
 	except Exception as e:
 		frappe.log_error(f"Failed to {'enable' if is_enabled else 'disable'} Apollo sequence {row.apollo_id} for Cadence {cadence_name}", str(e))
+		raise
 
 def on_trash(doc, method=None):
 	for row in doc.get("apollo_ids", []):
@@ -64,6 +65,7 @@ def archive_sequence(account_name, apollo_id):
 		client.archive_sequence(apollo_id)
 	except Exception as e:
 		frappe.log_error(f"Failed to archive Apollo sequence {apollo_id}", str(e))
+		raise
 
 def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 	doc = frappe.get_doc("Cadence", cadence_name)
@@ -116,6 +118,7 @@ def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 				client.update_sequence(row.apollo_id, {"emailer_steps": update_steps})
 			except Exception as e:
 				frappe.log_error(f"Failed to update Apollo sequence {row.apollo_id} for Cadence {cadence_name}", str(e))
+				raise
 		return
 		
 	try:
@@ -136,6 +139,7 @@ def _provision_sequence(cadence_name, account_name, sender, emailer_steps=None):
 				doc.save()
 	except Exception as e:
 		frappe.log_error(f"Failed to create Apollo sequence for Cadence {cadence_name}", str(e))
+		raise
 
 def _get_sequence_steps(cadence_name):
 	doc = frappe.get_doc("Cadence", cadence_name)
