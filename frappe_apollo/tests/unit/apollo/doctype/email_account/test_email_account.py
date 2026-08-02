@@ -9,7 +9,7 @@ class TestEmailAccount(UnitTestCase):
     @patch("frappe.get_doc")
     @patch("frappe.get_all")
     def test_queue_get_email_accounts_enqueues_for_api_key_password_field(self, mock_get_all, mock_get_doc, mock_enqueue):
-        mock_get_all.return_value = [{"name": "Acc1"}]
+        mock_get_all.return_value = [frappe._dict({"name": "Acc1"})]
         mock_doc = MagicMock()
         mock_doc.get_password.side_effect = lambda field, raise_exception=False: "secret_api_key" if field == "api_key" else None
         mock_doc.access_token = None

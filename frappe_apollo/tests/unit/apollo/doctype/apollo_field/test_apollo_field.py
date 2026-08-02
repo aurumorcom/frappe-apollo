@@ -141,8 +141,16 @@ class TestField(UnitTestCase):
 
         mock_cadence = MagicMock()
         mock_cadence.name = "Cad1"
-        mock_apollo_id_row = MagicMock(status="Active", account="Acc1", sender="Sender1", apollo_id="seq123")
-        mock_step = MagicMock(name="step1", subject_field="old")
+
+        mock_apollo_id_row = MagicMock()
+        mock_apollo_id_row.status = "Active"
+        mock_apollo_id_row.account = "Acc1"
+        mock_apollo_id_row.sender = "Sender1"
+        mock_apollo_id_row.apollo_id = "seq123"
+
+        mock_step = MagicMock()
+        mock_step.name = "step1"
+        mock_step.subject_field = "old"
 
         def mock_get_side_effect(k, d=[]):
             if k == "apollo_ids": return [mock_apollo_id_row]
