@@ -131,7 +131,18 @@ class ApolloClient:
 			"client_secret": self.account.get_password("client_secret")
 		}
 		response = requests.post(url, data=payload)
-		response.raise_for_status()
+		try:
+			response.raise_for_status()
+		except requests.exceptions.HTTPError as e:
+			if response.status_code in (400, 401, 403):
+				self.account.status = "Unauthorized"
+				self.account.access_token = None
+				self.account.refresh_token = None
+				self.account.save(ignore_permissions=True)
+				frappe.db.commit()
+				frappe.log_error(f"Apollo OAuth token refresh failed for account {self.account_name}", str(e))
+			raise
+
 		data = response.json()
 		
 		self.account.access_token = data.get("access_token")

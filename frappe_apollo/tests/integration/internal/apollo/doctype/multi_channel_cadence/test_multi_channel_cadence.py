@@ -22,7 +22,11 @@ class TestMCCIntegration(IntegrationTestCase):
     @patch("frappe_apollo.integrations.apollo.ApolloClient")
     def test_sequence_inactive_raises_wait(self, mock_client_class, mock_get_all, mock_get_doc, mock_get_value, mock_wait):
         # Setup mocks
-        def mock_get_value_side_effect(dt, name_or_filters=None, fieldname=None):
+        from frappe.database.database import Database
+        real_get_value = Database.get_value
+        def mock_get_value_side_effect(*args, **kwargs):
+            dt = args[0] if args else kwargs.get("doctype")
+            if dt == "DocType": return real_get_value(frappe.db, *args, **kwargs)
             if dt == "Cadence Provider": return 1
             if dt == "User Email": return "Email-Acc-1"
             return "val"
@@ -73,7 +77,11 @@ class TestMCCIntegration(IntegrationTestCase):
     @patch("frappe.enqueue")
     def test_valid_sync(self, mock_enqueue, mock_client_class, mock_get_all, mock_get_doc, mock_get_value, mock_wait):
         # Setup mocks
-        def mock_get_value_side_effect(dt, name_or_filters=None, fieldname=None):
+        from frappe.database.database import Database
+        real_get_value = Database.get_value
+        def mock_get_value_side_effect(*args, **kwargs):
+            dt = args[0] if args else kwargs.get("doctype")
+            if dt == "DocType": return real_get_value(frappe.db, *args, **kwargs)
             if dt == "Cadence Provider": return 1
             if dt == "User Email": return "Email-Acc-1"
             return "val"

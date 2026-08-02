@@ -115,3 +115,29 @@ class TestApolloClient(UnitTestCase):
         last_call_kwargs = mock_request.call_args_list[1][1]
         self.assertIn("params", last_call_kwargs)
         self.assertNotIn("json", last_call_kwargs)
+
+    @patch("frappe.log_error")
+    @patch("frappe.db.commit")
+    @patch("frappe.get_doc")
+    @patch("frappe_apollo.integrations.apollo.requests.post")
+    def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit, mock_log_error):
+        mock_account = MagicMock()
+        mock_account.get_password.return_value = "token"
+        mock_get_doc.return_value = mock_account
+
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        http_error = requests.exceptions.HTTPError("401 Client Error")
+        mock_response.raise_for_status.side_effect = http_error
+        mock_post.return_value = mock_response
+
+        client = ApolloClient("Test Account")
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            client._refresh_oauth_token()
+
+        self.assertEqual(mock_account.status, "Unauthorized")
+        self.assertIsNone(mock_account.access_token)
+        self.assertIsNone(mock_account.refresh_token)
+        mock_account.save.assert_called_once_with(ignore_permissions=True)
+        mock_commit.assert_called_once()

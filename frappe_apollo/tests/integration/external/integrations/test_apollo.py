@@ -35,15 +35,15 @@ class TestApolloExternalAPI(IntegrationTestCase):
 
 	def setUp(self):
 		super().setUp()
-		if not frappe.db.exists("Apollo Account", self.account_name):
-			frappe.get_doc({
-				"doctype": "Apollo Account",
-				"account_name": self.account_name,
-				"api_key": "dummy_api_key_for_vcr",
-				"client_id": "dummy_client_id",
-				"client_secret": "dummy_client_secret",
-				"status": "Authorized"
-			}).insert()
+		doc = frappe.get_doc("Apollo Account", self.account_name) if frappe.db.exists("Apollo Account", self.account_name) else frappe.new_doc("Apollo Account")
+		doc.account_name = self.account_name
+		doc.status = "Authorized"
+		if self.account_name == "Dummy VCR Account":
+			doc.api_key = "dummy_api_key_for_vcr"
+			doc.refresh_token = None
+			doc.access_token = None
+			doc.expired = None
+		doc.save(ignore_permissions=True)
 		self.client = ApolloClient(self.account_name)
 
 	def _cleanup_all_sequences(self):

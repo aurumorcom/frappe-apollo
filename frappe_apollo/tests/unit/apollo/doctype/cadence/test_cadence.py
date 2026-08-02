@@ -217,3 +217,24 @@ class TestCadenceProvisioning(UnitTestCase):
         ]
         
         self.assertEqual(emailer_steps, expected_emailer_steps)
+
+    @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
+    @patch("frappe.get_doc")
+    @patch("frappe.db.get_value")
+    @patch("frappe.log_error")
+    def test_provision_sequence_re_raises_exception(self, mock_log_error, mock_db_get_value, mock_get_doc, mock_client_cls):
+        mock_cadence = MagicMock()
+        mock_cadence.cadence_name = "Test Cadence"
+        row1 = MagicMock(account="Acc1", sender="Sender1", apollo_id=None)
+        mock_cadence.get.return_value = [row1]
+        mock_get_doc.return_value = mock_cadence
+        mock_db_get_value.side_effect = lambda dt, name, field: 1 if dt == "Cadence Provider" else "Authorized"
+
+        mock_client = mock_client_cls.return_value
+        mock_client.create_sequence.side_effect = Exception("API error")
+
+        from frappe_apollo.apollo.doctype.cadence.cadence import _provision_sequence
+        with self.assertRaises(Exception):
+            _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
+
+        mock_log_error.assert_called_once()

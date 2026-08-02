@@ -116,4 +116,5 @@ def provision_a_field(cadence_name, step_name, field_type, account_name, sender)
 				field_doc.save(ignore_permissions=True)
 		except Exception as e:
 			frappe.log_error(title="Apollo Field Creation Failed", message=str(e))
+			raise
 
