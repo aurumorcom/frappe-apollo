@@ -6,13 +6,20 @@ from frappe.model.document import Document
 
 class ApolloAccount(Document):
 	def on_update(self):
-		pass
+		if self.has_value_changed("status") and self.status == "Authorized":
+			from frappe_controller.utils.background_jobs import enqueue
+
+			enqueue(
+				"frappe_apollo.apollo.doctype.apollo_account.apollo_account.provision_sequence",
+				queue="low",
+				account_name=self.name,
+			)
 
 	def after_insert(self):
 		frappe.enqueue(
 			method="frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts",
 			queue="low",
-			account_name=self.name
+			account_name=self.name,
 		)
 
 	@frappe.whitelist()
@@ -32,3 +39,36 @@ class ApolloAccount(Document):
 		self.status = "Unauthorized"
 		self.save()
 
+
+def provision_sequence(account_name):
+	from frappe_controller.utils.controller import wait_for_event
+
+	from frappe_apollo.integrations.apollo import ApolloClient
+
+	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
+	if account_status != "Authorized":
+		wait_for_event(
+			event_key=f"doc:Apollo Account:{account_name}:on_update",
+			condition="argument.get('status') == 'Authorized'",
+		)
+
+	existing_seq_id = frappe.db.get_value("Apollo Account", account_name, "apollo_sequence_id")
+	if existing_seq_id:
+		return
+
+	client = ApolloClient(account_name)
+	res = client.search_sequences(q_name="Cadence from Frappe")
+	sequence_id = None
+	if isinstance(res, dict) and "emailer_campaigns" in res:
+		for campaign in res.get("emailer_campaigns") or []:
+			if campaign.get("name") == "Cadence from Frappe":
+				sequence_id = campaign.get("id")
+				break
+
+	if not sequence_id:
+		sequence_id = client.create_sequence(name="Cadence from Frappe", active=True, emailer_steps=[])
+
+	if sequence_id:
+		doc = frappe.get_doc("Apollo Account", account_name)
+		doc.db_set("apollo_sequence_id", sequence_id)
+		doc.notify_update()
