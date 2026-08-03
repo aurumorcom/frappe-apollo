@@ -1,8 +1,11 @@
-import frappe
 import unittest
+
+import frappe
 from frappe.tests import IntegrationTestCase
+
 from frappe_apollo.integrations.apollo import ApolloClient
 from frappe_apollo.tests.integration.external.conftest import my_vcr
+
 
 class TestApolloExternalAPI(IntegrationTestCase):
 	@classmethod
@@ -24,7 +27,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		# If no real credentials are provided, use dummy ones for VCR replay
 		if not cls.account_name:
 			cls.account_name = "Dummy VCR Account"
-			
+
 		if not cls.sequence_id:
 			cls.sequence_id = "6a0cdfe8da382d001cc8423e" # Default sequence ID from cassettes
 
@@ -99,13 +102,13 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		}
 		contact_id = self.client.create_contact(lead_data)
 		self.assertIsNotNone(contact_id)
-			
+
 		# Act: Update the contact
 		custom_fields = {
 			"test_external_field": "Test Value"
 		}
 		response = self.client.update_contact(contact_id, custom_fields)
-		
+
 		# Assert
 		self.assertIn("contact", response)
 
@@ -116,7 +119,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		if not accounts_response.get("email_accounts"):
 			self.skipTest("No email accounts available to send from")
 		mailbox_id = accounts_response["email_accounts"][0].get("id")
-		
+
 		# Setup: Create a contact to add to the sequence
 		lead_data = {
 			"first_name": "Test",
@@ -125,10 +128,10 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		}
 		contact_id = self.client.create_contact(lead_data)
 		self.assertIsNotNone(contact_id)
-			
+
 		# Act: Add to sequence
 		response = self.client.add_contacts_to_sequence(contact_id, self.sequence_id, mailbox_id)
-		
+
 		# Assert
 		self.assertIn("contacts", response)
 
@@ -164,7 +167,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		}]
 		sequence_id = self.client.create_sequence(sequence_name, emailer_steps=emailer_steps)
 		self.assertIsNotNone(sequence_id)
-		
+
 		# Teardown
 		try:
 			self.client.archive_sequence(sequence_id)
@@ -189,7 +192,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		# Setup: Create a sequence to update
 		sequence_id = self.client.create_sequence("Test External Sequence Update VCR")
 		self.assertIsNotNone(sequence_id)
-		
+
 		# Act: Update the sequence
 		emailer_steps = [{
 			"position": 1,
@@ -208,12 +211,12 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		}]
 		payload = {"emailer_steps": emailer_steps}
 		response = self.client.update_sequence(sequence_id, payload)
-		
+
 		# Assert
 		self.assertIn("emailer_campaign", response)
 		updated_steps = response.get("emailer_campaign", {}).get("emailer_steps", [])
 		self.assertEqual(len(updated_steps), 1, "Steps should be updated in the sequence")
-		
+
 		# Check touches
 		touches = response.get("emailer_touches", [])
 		self.assertEqual(len(touches), 1, "Email touches should be present in the response")
@@ -238,10 +241,10 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		account.db_set("expired", original_expired)
 		account.db_set("refresh_token", "dummy_refresh")
 		account.db_set("status", "Authorized")
-		
+
 		self.client.account.reload()
-		
-		from unittest.mock import patch, MagicMock
+
+		from unittest.mock import MagicMock, patch
 		# Proactive refresh should trigger before making the request
 		with patch("frappe_apollo.integrations.apollo.requests.post") as mock_post:
 			mock_response = MagicMock()
@@ -255,7 +258,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 
 			response = self.client.get_email_accounts()
 			mock_post.assert_called_once()
-		
+
 		account.reload()
 		self.assertIn("email_accounts", response)
 		self.assertGreater(account.expired, original_expired)
