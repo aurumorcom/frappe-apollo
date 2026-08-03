@@ -1,5 +1,6 @@
 import frappe
 from frappe.tests import IntegrationTestCase
+
 from frappe_apollo.install import after_install
 
 
