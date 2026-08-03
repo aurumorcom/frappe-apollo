@@ -180,11 +180,13 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
         mock_client = mock_client_cls.return_value
         mock_client.create_custom_field.return_value = {"typed_custom_fields": [{"id": "custom_field_555"}]}
+        mock_client.get_sequence.return_value = {"emailer_steps": []}
 
         provision_a_field("subject_1", "string", "TestAccount2")
 
         field_doc = frappe.get_doc("Apollo Field", "subject_1")
         self.assertTrue(any(r.account == "TestAccount2" and r.apollo_id == "custom_field_555" for r in field_doc.apollo_ids))
+
 
     def test_mcc_draft_reassignment(self):
         cadence = self._create_test_cadence()
