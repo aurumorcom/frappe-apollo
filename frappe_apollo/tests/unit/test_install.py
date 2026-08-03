@@ -1,5 +1,7 @@
+from unittest.mock import MagicMock, patch
+
 from frappe.tests import UnitTestCase
-from unittest.mock import patch, MagicMock
+
 from frappe_apollo.install import after_install
 
 
