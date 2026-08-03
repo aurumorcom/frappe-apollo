@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "account",
-  "apollo_sequence_id",
   "apollo_id"
  ],
  "fields": [
@@ -17,13 +16,6 @@
    "in_list_view": 1,
    "label": "Account",
    "options": "Apollo Account",
-   "reqd": 1
-  },
-  {
-   "fieldname": "apollo_sequence_id",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Apollo Sequence ID",
    "reqd": 1
   },
   {

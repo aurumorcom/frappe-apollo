@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "account_name",
+  "apollo_sequence_id",
   "status",
   "api_key",
   "client_id",
@@ -24,6 +25,12 @@
    "in_list_view": 1,
    "label": "Account Name",
    "unique": 1
+  },
+  {
+   "fieldname": "apollo_sequence_id",
+   "fieldtype": "Data",
+   "label": "Apollo Sequence ID",
+   "read_only": 1
   },
   {
    "fieldname": "api_key",

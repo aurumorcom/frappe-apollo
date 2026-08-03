@@ -1,23 +1,24 @@
 import frappe
 
+
 def _create_a_contact(mcc_name):
 	from frappe_controller.utils.controller import wait_for_event
 
 	mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
-	
+
 	# Revalidate
 	if mcc.status not in ["Scheduled", "In Progress", "Active"]:
 		return
-		
+
 	sender = mcc.sender
 	lead_name = mcc.recipient
-	
+
 	# Verify that all expected communications are created
 	cadence = frappe.get_doc("Cadence", mcc.cadence_name)
 	expected_comms = len(cadence.get("cadence_schedules", []))
-	
+
 	actual_comms = frappe.db.count("Communication", {"reference_doctype": "Multi Channel Cadence", "reference_name": mcc.name})
-	
+
 	if actual_comms < expected_comms:
 		wait_for_event(
 			event_key="doc:Communication:after_insert",
@@ -113,8 +114,9 @@ def _create_a_contact(mcc_name):
 
 
 def create_a_contact(lead_name, account_name):
+	from frappe_controller.utils.controller import SuspendJob, wait_for_event
+
 	from frappe_apollo.integrations.apollo import ApolloClient
-	from frappe_controller.utils.controller import wait_for_event, SuspendJob
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
@@ -157,8 +159,9 @@ def create_a_contact(lead_name, account_name):
 		raise
 
 def update_a_contact(lead_name, account_name):
+	from frappe_controller.utils.controller import SuspendJob, wait_for_event
+
 	from frappe_apollo.integrations.apollo import ApolloClient
-	from frappe_controller.utils.controller import wait_for_event, SuspendJob
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
@@ -178,7 +181,7 @@ def update_a_contact(lead_name, account_name):
 			raise SuspendJob("Apollo Account is not Authorized.")
 
 	lead = frappe.get_doc("CRM Lead", lead_name)
-	
+
 	current_row = next((row for row in lead.get("apollo_ids", []) if row.account == account_name), None)
 	if not current_row or not current_row.apollo_id:
 		return

@@ -1,5 +1,6 @@
 import frappe
 
+
 def on_update(doc, method=None):
 	if doc.name == "Apollo":
 		# Only enqueue for cadences linked to Apollo
