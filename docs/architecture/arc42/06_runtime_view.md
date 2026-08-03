@@ -17,6 +17,16 @@ flowchart TD
     TokenExchange --> SaveAccountToken["Save Tokens (Authorized) & Emit Event"]
     end
     
+    %% Apollo Account Sequence Provisioning
+    subgraph Apollo Account Provisioning
+    AccountAuth(["Apollo Account -> 'Authorized'"]) --> EnqueueSeqProv["Enqueue provision_sequence()"]
+    EnqueueSeqProv --> SearchSeq["ApolloClient search_sequences()"]
+    SearchSeq --> CheckSearch{"Sequence Found?"}
+    CheckSearch -- Yes --> SaveSeqID["Save sequence_id"]
+    CheckSearch -- No --> CreateSeq["ApolloClient create_sequence()"]
+    CreateSeq --> SaveSeqID
+    end
+    
     %% Mailbox Sync
     subgraph Mailbox Sync
     CronTrigger(["Cron Scheduler Event"]) --> QueueEmailAccounts["Email Account queue_get_email_accounts()"]
@@ -29,20 +39,21 @@ flowchart TD
     subgraph Cadence Field Provisioning
     OnUpdateCadence(["Cadence on_update"]) --> CheckApolloChannels{"Uses Apollo Channels?"}
     CheckApolloChannels -- Yes --> ValidateSeq["_validate_for_sequence()"]
-    ValidateSeq --> CheckSeqID{"apollo_sequence_id Exists on Account?"}
-    CheckSeqID -- No --> DisableCadence["Disable Cadence & Warn"]
-    CheckSeqID -- Yes --> CheckStepCount{"Required Steps > Apollo Sequence Steps?"}
-    CheckStepCount -- Yes --> DisableCadence
-    CheckStepCount -- No --> EnqueueFieldProv["Enqueue Provision Generic Fields"]
+    ValidateSeq --> EnqueueFieldProv["Enqueue Provision Generic Fields"]
     
-    EnqueueFieldProv --> LoopFields["For each required step"]
+    EnqueueFieldProv --> WaitFieldPrereqs["wait_for_event(Account Auth)"]
+    WaitFieldPrereqs --> LoopFields["For each required step"]
     LoopFields --> CheckFieldMap{"Mapped for Account?"}
     CheckFieldMap -- No --> CreateCustomField["ApolloClient create_custom_field()"]
     CreateCustomField --> SaveFieldMap["Save ID in Apollo Field Apollo ID"]
+    SaveFieldMap --> WaitSeqID["wait_for_event(Sequence ID)"]
+    CheckFieldMap -- Yes --> WaitSeqID
+    WaitSeqID --> CheckStepCapacity["Check Sequence step capacity"]
+    CheckStepCapacity -- Missing Steps --> AppendSteps["ApolloClient update_sequence(emailer_steps)"]
     
     CadenceDisabled(["Cadence -> Disabled"]) --> EnqueueDisableMCC["Enqueue _disable_cadence_mccs()"]
     EnqueueDisableMCC --> SetMCCDisabled["Set Linked MCCs to Disabled"]
-    SetMCCDisabled --> EnqueueStopContact
+    SetMCCDisabled --> EnqueueStopContact2["Enqueue _stop_contact_in_sequence()"]
     end
     
     %% Contact Sync & Sequence Assignment

@@ -1,40 +1,59 @@
 # 3. Apollo Account Sequence & Field Provisioning
 
-This document details the behavioral workflow for provisioning the single cold-mail engine sequence and generic custom fields when an Apollo Account is authorized in [`apps/frappe_apollo/frappe_apollo/hooks.py`](apps/frappe_apollo/frappe_apollo/hooks.py:1).
+This document details the behavioral workflow for provisioning the single cold-mail engine sequence and generic custom fields when an Apollo Account is authorized and Cadences are updated.
 
 ## Trigger
-Apollo Account is authorized via OAuth or API Key (`Apollo Account on_update` where `status == Authorized`).
+- Sequence Provisioning: Apollo Account is authorized (`Apollo Account on_update` where `status == Authorized`).
+- Field Provisioning: A Frappe Cadence is created or updated (`Cadence on_update`).
 
 ## Workflow Flowchart
 
 ```mermaid
 flowchart TD
-    AccountAuth(["Apollo Account status = Authorized"]) --> OnUpdateAccount["Apollo Account on_update Hook"]
-    OnUpdateAccount --> EnqueueSeqProv["Enqueue _provision_engine_sequence()"]
-    
     %% Engine Sequence Provisioning Loop
-    EnqueueSeqProv --> CheckSeqExists{"apollo_sequence_id Exists?"}
-    CheckSeqExists -- Yes --> UpdateSeq["ApolloClient update_sequence()"]
-    CheckSeqExists -- No --> CreateSeq["ApolloClient create_sequence(4 Steps)"]
-    CreateSeq --> SaveSeqID["Save ID in Apollo Account & doc.save()"]
-    SaveSeqID --> EmitAccountUpdate["Emit Apollo Account on_update Event"]
-    UpdateSeq --> EnqueueFieldProv["Enqueue _provision_generic_fields()"]
-    EmitAccountUpdate --> EnqueueFieldProv
+    AccountAuth(["Apollo Account status = Authorized"]) --> OnUpdateAccount["Apollo Account on_update Hook"]
+    OnUpdateAccount --> EnqueueSeqProv["Enqueue provision_sequence() Job"]
     
-    %% Generic Field Provisioning Loop (e.g., subject_step_1, body_step_1)
-    EnqueueFieldProv --> LoopFields["For each of the 4 steps (Subject/Body)"]
-    LoopFields --> GetOrCreateField["Get/Create Generic Apollo Field Doc"]
-    GetOrCreateField --> CheckFieldMap{"Mapped for Account?"}
-    CheckFieldMap -- Yes --> EndFieldProv(["Fields Provisioned"])
+    EnqueueSeqProv --> CheckSeqExists{"apollo_sequence_id exists locally?"}
+    CheckSeqExists -- Yes --> EndSeqProv(["Sequence Provisioned"])
+    CheckSeqExists -- No --> SearchSeq["ApolloClient search_sequences('Cadence from Frappe')"]
+    SearchSeq --> CheckSearch{"Found sequence?"}
+    CheckSearch -- Yes --> SaveSeqID["Save sequence_id to Apollo Account"]
+    CheckSearch -- No --> CreateSeq["ApolloClient create_sequence(name='Cadence from Frappe', steps=[])"]
+    CreateSeq --> SaveSeqID
+    SaveSeqID --> EmitAccountUpdate["Emit Apollo Account on_update Event"]
+    EmitAccountUpdate --> EndSeqProv
+    
+    %% Generic Field Provisioning Loop
+    CadenceUpdate(["Cadence on_update"]) --> EnqueueFields["Enqueue provision_a_field() for required steps (e.g., subject_1)"]
+    
+    EnqueueFields --> CheckProvider{"Cadence Provider Enabled?"}
+    CheckProvider -- No --> WaitProvider[/wait_for_event 'Cadence Provider'/]
+    WaitProvider --> CheckProvider
+    CheckProvider -- Yes --> CheckAccount{"Apollo Account Authorized?"}
+    
+    CheckAccount -- No --> WaitAccount[/wait_for_event 'Apollo Account'/]
+    WaitAccount --> CheckAccount
+    CheckAccount -- Yes --> CreateLocalField["Get/Create Local Apollo Field Doc"]
+    
+    CreateLocalField --> CheckFieldMap{"Mapped for Account?"}
     CheckFieldMap -- No --> CreateCustomField["ApolloClient create_custom_field()"]
-    CreateCustomField --> SaveFieldMap["Save ID in Apollo Field Apollo ID"]
-    SaveFieldMap --> EmitFieldUpdate["Emit Apollo Field on_update Event"]
-    EmitFieldUpdate --> EndFieldProv
+    CreateCustomField --> SaveFieldMap["Save ID in Apollo Field apollo_ids"]
+    SaveFieldMap --> CheckLocalSeqID
+    CheckFieldMap -- Yes --> CheckLocalSeqID{"Apollo Account has apollo_sequence_id?"}
+    
+    CheckLocalSeqID -- No --> WaitSeqID[/wait_for_event 'apollo_sequence_id'/]
+    WaitSeqID --> CheckLocalSeqID
+    CheckLocalSeqID -- Yes --> CheckStepCapacity["_update_sequence() - Check if sequence steps < field_index"]
+    
+    CheckStepCapacity -- Yes --> AppendSteps["ApolloClient update_sequence(append new steps with custom_field variables)"]
+    AppendSteps --> EndFieldProv(["Field & Step Provisioned"])
+    CheckStepCapacity -- No --> EndFieldProv
 ```
 
 ## Component References
 
-- **Apollo Field**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_field/apollo_field.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_field/apollo_field.py:5)
-- **Apollo Field Apollo ID**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_field_apollo_id/apollo_field_apollo_id.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_field_apollo_id/apollo_field_apollo_id.py:1)
-- **Apollo Account**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.py:5)
-- **ApolloClient**: [`apps/frappe_apollo/frappe_apollo/integrations/apollo.py`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:9)
+- **Apollo Field**: [`frappe_apollo/apollo/doctype/apollo_field/apollo_field.py`](../../../frappe_apollo/apollo/doctype/apollo_field/apollo_field.py:5)
+- **Apollo Account**: [`frappe_apollo/apollo/doctype/apollo_account/apollo_account.py`](../../../frappe_apollo/apollo/doctype/apollo_account/apollo_account.py:5)
+- **Cadence**: [`frappe_apollo/apollo/doctype/cadence/cadence.py`](../../../frappe_apollo/apollo/doctype/cadence/cadence.py:5)
+- **ApolloClient**: [`frappe_apollo/integrations/apollo.py`](../../../frappe_apollo/integrations/apollo.py:11)
