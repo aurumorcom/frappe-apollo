@@ -1,8 +1,11 @@
+from unittest.mock import MagicMock, patch
+
 import frappe
-from frappe.tests import IntegrationTestCase
-from unittest.mock import patch, MagicMock
-from frappe_apollo.webhook import handle, process_webhook
 from frappe.exceptions import AuthenticationError
+from frappe.tests import IntegrationTestCase
+
+from frappe_apollo.webhook import handle, process_webhook
+
 
 class TestWebhookIntegration(IntegrationTestCase):
     def setUp(self):
@@ -190,7 +193,7 @@ class TestWebhookIntegration(IntegrationTestCase):
             "contact_id": "unknown",
             "emailer_campaign_id": "seq_123"
         }
-        
+
         # Mock get_all to return empty for CRM Lead Apollo ID
         def mock_get_all_side_effect(doctype, *args, **kwargs):
             if doctype == "CRM Lead Apollo ID":
@@ -199,5 +202,5 @@ class TestWebhookIntegration(IntegrationTestCase):
 
         with patch("frappe.get_all", side_effect=mock_get_all_side_effect):
             process_webhook(payload)
-            
+
         mock_report_event.assert_not_called()

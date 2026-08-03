@@ -10,7 +10,7 @@ The `frappe_apollo` custom application integrates Apollo.io multi-channel cadenc
 ## Decisions
 
 ### ADR 1: Account-Scoped Child Table Mappings
-- **Decision**: Store external Apollo IDs (`sequence_id`, `contact_id`, `mailbox_id`, `field_id`) in dedicated child tables (`Cadence Apollo ID`, `CRM Lead Apollo ID`, `Email Account Apollo ID`, `Apollo Field Apollo ID`) keyed by `Apollo Account` ([`apps/frappe_apollo/frappe_apollo/apollo/doctype/cadence_apollo_id/cadence_apollo_id.json`](apps/frappe_apollo/frappe_apollo/apollo/doctype/cadence_apollo_id/cadence_apollo_id.json:1)).
+- **Decision**: Store external Apollo IDs (`contact_id`, `mailbox_id`, `field_id`) in dedicated child tables (`CRM Lead Apollo ID`, `Email Account Apollo ID`, `Apollo Field Apollo ID`) keyed by `Apollo Account`. The `Cadence Apollo ID` child table continues to map Frappe Cadences to their designated Apollo Accounts and senders, but no longer stores sequence IDs.
 - **Consequence**: Allows a single Frappe CRM instance to seamlessly map entities across multiple Apollo accounts without data collisions.
 
 ### ADR 2: Event-Driven Resumption via `wait_for_event`

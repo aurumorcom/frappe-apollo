@@ -1,5 +1,7 @@
-from frappe.tests import UnitTestCase
 from unittest.mock import patch
+
+from frappe.tests import UnitTestCase
+
 from frappe_apollo.uninstall import before_uninstall
 
 

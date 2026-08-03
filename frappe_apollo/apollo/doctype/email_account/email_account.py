@@ -1,5 +1,6 @@
 import frappe
 
+
 @frappe.whitelist()
 def queue_get_email_accounts():
     """
@@ -21,21 +22,21 @@ def get_email_accounts(account_name):
     Upserts Email Account records in Frappe with apollo_ids mapping.
     """
     from frappe_apollo.integrations.apollo import ApolloClient
-    
+
     client = ApolloClient(account_name)
     try:
         mailboxes = client.get_email_accounts()
         for mb in mailboxes.get("email_accounts", []):
             if not mb.get("active"):
                 continue
-                
+
             email_id = mb.get("email")
             if not email_id:
                 continue
-                
+
             email_account_name = frappe.db.get_value("Email Account", {"email_id": email_id}, "name")
             apollo_id = mb.get("id")
-            
+
             if email_account_name:
                 doc = frappe.get_doc("Email Account", email_account_name)
                 # Check if account is already mapped
@@ -47,7 +48,7 @@ def get_email_accounts(account_name):
                             acc.apollo_id = apollo_id
                             doc.save(ignore_permissions=True)
                         break
-                
+
                 if not account_found:
                     doc.append("apollo_ids", {
                         "account": account_name,

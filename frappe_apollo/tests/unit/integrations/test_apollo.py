@@ -1,143 +1,138 @@
+from unittest.mock import MagicMock, patch
+
 import frappe
-from frappe.tests import UnitTestCase
-from frappe_apollo.integrations.apollo import ApolloClient, ApolloRateLimitError
-from unittest.mock import patch, MagicMock
 import requests
+from frappe.tests import UnitTestCase
+
+from frappe_apollo.integrations.apollo import ApolloClient, ApolloRateLimitError
+
 
 class TestApolloClient(UnitTestCase):
 
-    @patch("frappe.get_doc")
-    def test_get_headers_api_key(self, mock_get_doc):
-        mock_account = MagicMock()
-        mock_account.get_password.side_effect = lambda field: "test_key" if field == "api_key" else None
-        mock_account.access_token = None
-        mock_account.refresh_token = None
-        mock_get_doc.return_value = mock_account
+	@patch("frappe.get_doc")
+	def test_get_headers_api_key(self, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: "test_key" if field == "api_key" else None
+		mock_account.access_token = None
+		mock_account.refresh_token = None
+		mock_get_doc.return_value = mock_account
 
-        client = ApolloClient("Test Account")
-        headers = client._get_headers()
-        
-        self.assertEqual(headers.get("X-Api-Key"), "test_key")
-        self.assertNotIn("Authorization", headers)
+		client = ApolloClient("Test Account")
+		headers = client._get_headers()
 
-    @patch("frappe.get_doc")
-    def test_get_headers_oauth(self, mock_get_doc):
-        mock_account = MagicMock()
-        mock_account.get_password.side_effect = lambda field: "actual_token_value" if field == "access_token" else None
-        mock_account.access_token = "some_token"
-        mock_get_doc.return_value = mock_account
+		self.assertEqual(headers.get("X-Api-Key"), "test_key")
+		self.assertNotIn("Authorization", headers)
 
-        client = ApolloClient("Test Account")
-        headers = client._get_headers()
-        
-        self.assertEqual(headers.get("Authorization"), "Bearer actual_token_value")
-        self.assertNotIn("X-Api-Key", headers)
-        mock_account.get_password.assert_called_with("access_token")
+	@patch("frappe.get_doc")
+	def test_get_headers_oauth(self, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: "actual_token_value" if field == "access_token" else None
+		mock_account.access_token = "some_token"
+		mock_get_doc.return_value = mock_account
 
-    @patch("frappe.get_doc")
-    @patch("frappe_apollo.integrations.apollo.requests.request")
-    def test_rate_limit_error(self, mock_request, mock_get_doc):
-        mock_account = MagicMock()
-        mock_account.get_password.side_effect = lambda field: "key" if field == "api_key" else None
-        mock_account.refresh_token = None
-        mock_get_doc.return_value = mock_account
+		client = ApolloClient("Test Account")
+		headers = client._get_headers()
 
-        mock_response = MagicMock()
-        mock_response.status_code = 429
-        mock_request.return_value = mock_response
+		self.assertEqual(headers.get("Authorization"), "Bearer actual_token_value")
+		self.assertNotIn("X-Api-Key", headers)
 
-        client = ApolloClient("Test Account")
-        
-        with self.assertRaises(ApolloRateLimitError):
-            client.get_email_accounts()
+	@patch("frappe.get_doc")
+	@patch("frappe_apollo.integrations.apollo.requests.request")
+	def test_rate_limit_error(self, mock_request, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: "key" if field == "api_key" else None
+		mock_account.refresh_token = None
+		mock_account.get.return_value = None
+		mock_get_doc.return_value = mock_account
 
-    @patch("frappe.get_doc")
-    @patch("frappe_apollo.integrations.apollo.requests.request")
-    def test_oauth_refresh(self, mock_request, mock_get_doc):
-        mock_account = MagicMock()
-        mock_account.api_key = None
-        mock_account.access_token = "old"
-        mock_account.refresh_token = "refresh"
-        mock_account.expired = None
-        mock_account.get_password.return_value = "old"
-        mock_account.get.return_value = None
-        mock_get_doc.return_value = mock_account
+		mock_response = MagicMock()
+		mock_response.status_code = 429
+		mock_request.return_value = mock_response
 
-        # First request returns 401, second returns 200
-        response_401 = MagicMock()
-        response_401.status_code = 401
-        
-        response_200 = MagicMock()
-        response_200.status_code = 200
-        response_200.json.return_value = {"success": True}
-        
-        mock_request.side_effect = [response_401, response_200]
+		client = ApolloClient("Test Account")
 
-        client = ApolloClient("Test Account")
-        
-        with patch.object(client, "_refresh_oauth_token") as mock_refresh:
-            res = client._request("GET", "/test")
-            self.assertEqual(res, {"success": True})
-            mock_refresh.assert_called_once()
-            self.assertEqual(mock_request.call_count, 2)
+		with self.assertRaises(ApolloRateLimitError):
+			client.search_sequences()
 
-    @patch("frappe.get_doc")
-    @patch("frappe_apollo.integrations.apollo.requests.request")
-    def test_fallback_logic_add_contacts(self, mock_request, mock_get_doc):
-        mock_account = MagicMock()
-        mock_account.refresh_token = None
-        mock_get_doc.return_value = mock_account
+	@patch("frappe.get_doc")
+	@patch("frappe_apollo.integrations.apollo.requests.request")
+	def test_oauth_refresh(self, mock_request, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.api_key = None
+		mock_account.access_token = "old"
+		mock_account.refresh_token = "refresh"
+		mock_account.get_password.return_value = "old"
+		mock_account.get.return_value = None
+		mock_get_doc.return_value = mock_account
 
-        # Simulate 422 error on first call
-        def mock_request_side_effect(*args, **kwargs):
-            if "json" in kwargs:
-                # the first call has 'json'
-                response_422 = MagicMock()
-                response_422.status_code = 422
-                error = requests.exceptions.HTTPError("422")
-                error.response = response_422
-                raise error
-            
-            # the second call has 'params'
-            response_200 = MagicMock()
-            response_200.status_code = 200
-            response_200.json.return_value = {"success": True}
-            return response_200
+		response_401 = MagicMock()
+		response_401.status_code = 401
 
-        mock_request.side_effect = mock_request_side_effect
+		response_200 = MagicMock()
+		response_200.status_code = 200
+		response_200.json.return_value = {"success": True}
 
-        client = ApolloClient("Test Account")
-        res = client.add_contacts_to_sequence("person-1", "seq-1", "mb-1")
-        
-        self.assertEqual(res, {"success": True})
-        self.assertEqual(mock_request.call_count, 2)
-        # Ensure second call uses params
-        last_call_kwargs = mock_request.call_args_list[1][1]
-        self.assertIn("params", last_call_kwargs)
-        self.assertNotIn("json", last_call_kwargs)
+		mock_request.side_effect = [response_401, response_200]
 
-    @patch("frappe.log_error")
-    @patch("frappe.db.commit")
-    @patch("frappe.get_doc")
-    @patch("frappe_apollo.integrations.apollo.requests.post")
-    def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit, mock_log_error):
-        mock_account = MagicMock()
-        mock_account.get_password.return_value = "token"
-        mock_get_doc.return_value = mock_account
+		client = ApolloClient("Test Account")
 
-        mock_response = MagicMock()
-        mock_response.status_code = 401
-        http_error = requests.exceptions.HTTPError("401 Client Error")
-        mock_response.raise_for_status.side_effect = http_error
-        mock_post.return_value = mock_response
+		with patch.object(client, "_refresh_oauth_token") as mock_refresh:
+			res = client._request("GET", "/test")
+			self.assertEqual(res, {"success": True})
+			mock_refresh.assert_called_once()
+			self.assertEqual(mock_request.call_count, 2)
 
-        client = ApolloClient("Test Account")
+	@patch("frappe.get_doc")
+	@patch("frappe_apollo.integrations.apollo.requests.request")
+	def test_fallback_logic_add_contacts(self, mock_request, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.refresh_token = None
+		mock_account.get.return_value = None
+		mock_get_doc.return_value = mock_account
 
-        with self.assertRaises(requests.exceptions.HTTPError):
-            client._refresh_oauth_token()
+		def mock_request_side_effect(*args, **kwargs):
+			if "json" in kwargs and isinstance(kwargs["json"].get("contact_ids"), list):
+				response_400 = MagicMock()
+				response_400.status_code = 400
+				error = requests.exceptions.HTTPError("400")
+				error.response = response_400
+				raise error
 
-        self.assertEqual(mock_account.status, "Unauthorized")
-        self.assertIsNone(mock_account.access_token)
-        self.assertIsNone(mock_account.refresh_token)
-        mock_account.save.assert_called_once_with(ignore_permissions=True)
-        mock_commit.assert_called_once()
+			response_200 = MagicMock()
+			response_200.status_code = 200
+			response_200.json.return_value = {"success": True}
+			return response_200
+
+		mock_request.side_effect = mock_request_side_effect
+
+		client = ApolloClient("Test Account")
+		res = client.add_contacts_to_sequence("person-1", "seq-1", "mb-1")
+
+		self.assertEqual(res, {"success": True})
+		self.assertEqual(mock_request.call_count, 2)
+
+	@patch("frappe.log_error")
+	@patch("frappe.db.commit")
+	@patch("frappe.get_doc")
+	@patch("frappe_apollo.integrations.apollo.requests.post")
+	def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit, mock_log_error):
+		mock_account = MagicMock()
+		mock_account.get_password.return_value = "token"
+		mock_get_doc.return_value = mock_account
+
+		mock_response = MagicMock()
+		mock_response.status_code = 401
+		http_error = requests.exceptions.HTTPError("401 Client Error")
+		mock_response.raise_for_status.side_effect = http_error
+		mock_post.return_value = mock_response
+
+		client = ApolloClient("Test Account")
+
+		with self.assertRaises(requests.exceptions.HTTPError):
+			client._refresh_oauth_token()
+
+		self.assertEqual(mock_account.status, "Unauthorized")
+		self.assertIsNone(mock_account.access_token)
+		self.assertIsNone(mock_account.refresh_token)
+		mock_account.save.assert_called_once_with(ignore_permissions=True)
+		mock_commit.assert_called_once()

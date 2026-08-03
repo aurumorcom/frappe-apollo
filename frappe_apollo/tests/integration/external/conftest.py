@@ -1,12 +1,14 @@
 import aiohttp.streams
+
 if not hasattr(aiohttp.streams, "AsyncStreamReaderMixin"):
     class AsyncStreamReaderMixin:
         pass
     aiohttp.streams.AsyncStreamReaderMixin = AsyncStreamReaderMixin
 
-import vcr
 import os
+
 import frappe
+import vcr
 
 CASSETTE_DIR = os.path.join(os.path.dirname(__file__), 'integrations', 'cassettes')
 

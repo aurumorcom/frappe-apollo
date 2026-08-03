@@ -1,16 +1,18 @@
+from unittest.mock import MagicMock, patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
-from unittest.mock import patch, MagicMock
+
 
 class TestOAuth(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
-		
+
 		# Delete if exists to avoid collision before inserting inside the transaction
 		if frappe.db.exists("Apollo Account", "Test Account OAuth"):
 			frappe.delete_doc("Apollo Account", "Test Account OAuth", force=1, ignore_permissions=True)
 		frappe.db.sql("DELETE FROM `__Auth` WHERE `doctype` = 'Apollo Account' AND `name` = 'Test Account OAuth'")
-		
+
 		# Create Account
 		frappe.get_doc({
 			"doctype": "Apollo Account",
@@ -40,15 +42,15 @@ class TestOAuth(IntegrationTestCase):
 			"refresh_token": "new_refresh"
 		}
 		mock_post.return_value = mock_response
-		
+
 		frappe.local.response = {}
-		
+
 		from frappe_apollo.oauth import callback
 		callback("auth_code_123", "Test Account OAuth")
-		
+
 		account = frappe.get_doc("Apollo Account", "Test Account OAuth")
 		self.assertEqual(account.get_password("access_token"), "new_access")
 		self.assertEqual(account.get_password("refresh_token"), "new_refresh")
-		
+
 		self.assertEqual(frappe.local.response["type"], "redirect")
 		self.assertEqual(frappe.local.response["location"], "/app/apollo-account/Test Account OAuth")

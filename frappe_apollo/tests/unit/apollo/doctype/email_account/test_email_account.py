@@ -1,7 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import frappe
 from frappe.tests import UnitTestCase
-from unittest.mock import patch, MagicMock
+
 from frappe_apollo.apollo.doctype.email_account.email_account import queue_get_email_accounts
+
 
 class TestEmailAccount(UnitTestCase):
 

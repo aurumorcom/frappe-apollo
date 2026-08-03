@@ -1,7 +1,13 @@
+from unittest.mock import MagicMock, patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
-from unittest.mock import patch, MagicMock
-from frappe_apollo.apollo.doctype.email_account.email_account import queue_get_email_accounts, get_email_accounts
+
+from frappe_apollo.apollo.doctype.email_account.email_account import (
+    get_email_accounts,
+    queue_get_email_accounts,
+)
+
 
 class TestEmailAccountIntegration(IntegrationTestCase):
     def setUp(self):

@@ -9,13 +9,8 @@ Welcome to the architectural documentation for the **`frappe_apollo`** applicati
 - [**C2 Container Model**](c4/02-container.md): Execution containers, WSGI app, database, Redis workers, and Apollo API.
 - [**C3 Component Model**](c4/03-component.md): Complete entity relationship diagram and component specifications.
 
-### 2. Behavioral Workflows (`bpmn/`)
-- [**01 OAuth Authorization Flow**](bpmn/01-oauth-authentication.md): OAuth dialog and token exchange.
-- [**02 Email Account / Mailbox Sync Workflow**](bpmn/02-mailbox-sync.md): Daily cron mailbox synchronization.
-- [**03 Cadence & Custom Field Provisioning**](bpmn/03-cadence-provisioning.md): Sequence creation & step field provisioning.
-- [**04 Lead Contact Sync & Sequence Assignment**](bpmn/04-contact-sequence-assignment.md): Lead contact creation & sequence enrollment.
-- [**05 Communication Schedule Synchronization**](bpmn/05-communication-sync.md): Communication custom field schedule mapping.
-- [**06 Webhook Engagement Processing**](bpmn/06-webhook-processing.md): Incoming webhook engagement processing.
+### 2. Behavioral Workflows
+- [**BPMN Business Workflows**](bpmn.md): Single unified file containing the full behavioral and event-driven workflow graph for the entire project.
 
 ### 3. arc42 System Documentation (`arc42/`)
 - [**01 Introduction and Goals**](arc42/01_introduction_and_goals.md)
@@ -31,6 +26,7 @@ Welcome to the architectural documentation for the **`frappe_apollo`** applicati
   - [0002 Rename Account, Field, and Field Apollo ID DocTypes](arc42/09_architecture_decisions/0002-rename-account-and-field-doctypes.md)
   - [0003 Convert API Key to Password Type, Disable Strength Checks, and Add Workspace Sidebar](arc42/09_architecture_decisions/0003-convert-api-key-to-password-and-disable-strength-checks.md)
   - [0004 Cadence Provider Setup via App Lifecycle Hooks](arc42/09_architecture_decisions/0004-cadence-provider-lifecycle-hooks.md)
+  - [0005 Single Sequence Engine per Account](arc42/09_architecture_decisions/0005-single-sequence-engine-per-account.md)
 - [**10 Quality Requirements**](arc42/10_quality_requirements.md)
 - [**11 Risks and Technical Debt**](arc42/11_risks_and_technical_debt.md)
 - [**12 Glossary**](arc42/12_glossary.md)

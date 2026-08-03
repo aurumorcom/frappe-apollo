@@ -1,240 +1,118 @@
+from unittest.mock import MagicMock, call, patch
+
 import frappe
 from frappe.tests import UnitTestCase
-from frappe_apollo.apollo.doctype.cadence.cadence import _provision_sequence, _get_sequence_steps, on_update
-from unittest.mock import patch, MagicMock, call
-from frappe_controller.utils.controller import SuspendJob
+
+from frappe_apollo.apollo.doctype.cadence.cadence import (
+	_disable_cadence_mccs,
+	_validate_for_sequence,
+	on_update,
+)
+
 
 class TestCadenceProvisioning(UnitTestCase):
-    @patch("frappe_apollo.apollo.doctype.cadence.cadence.enqueue")
-    @patch("frappe_apollo.apollo.doctype.cadence.cadence._get_sequence_steps")
-    @patch("frappe.get_attr")
-    def test_on_update_enqueues_granular_jobs(self, mock_get_attr, mock_get_steps, mock_enqueue):
-        mock_get_steps.return_value = [{"step": 1}]
-        
-        doc = MagicMock()
-        doc.name = "Test Cadence"
-        doc.has_value_changed.return_value = False
-        
-        row1 = MagicMock()
-        row1.account = "Acc1"
-        row1.sender = "Sender1"
-        row2 = MagicMock()
-        row2.account = "Acc2"
-        row2.sender = "Sender2"
-        
-        doc.get.return_value = [row1, row2]
-        
-        mock_enqueue_field = MagicMock()
-        mock_get_attr.return_value = mock_enqueue_field
-        
-        on_update(doc)
-        
-        # Verify granular jobs were queued for each apollo_id
-        mock_enqueue.assert_has_calls([
-            call(
-                "frappe_apollo.apollo.doctype.cadence.cadence._provision_sequence",
-                queue="low",
-                cadence_name="Test Cadence",
-                account_name="Acc1",
-                sender="Sender1",
-                emailer_steps=[{"step": 1}]
-            ),
-            call(
-                "frappe_apollo.apollo.doctype.cadence.cadence._provision_sequence",
-                queue="low",
-                cadence_name="Test Cadence",
-                account_name="Acc2",
-                sender="Sender2",
-                emailer_steps=[{"step": 1}]
-            )
-        ])
-        
-        mock_enqueue_field.assert_has_calls([
-            call("Test Cadence", "Acc1", "Sender1"),
-            call("Test Cadence", "Acc2", "Sender2")
-        ])
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence._validate_for_sequence")
+	@patch("frappe.get_attr")
+	def test_on_update_validates_and_enqueues_fields(self, mock_get_attr, mock_validate):
+		doc = MagicMock()
+		doc.name = "Test Cadence"
+		doc.has_value_changed.return_value = False
 
-    @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
-    @patch("frappe.get_doc")
-    @patch("frappe.db.get_value")
-    @patch("frappe_controller.utils.controller.wait_for_event")
-    def test_provision_sequence_waits_for_provider_enablement(self, mock_wait_for_event, mock_db_get_value, mock_get_doc, mock_client_cls):
-        mock_cadence = MagicMock()
-        mock_cadence.cadence_name = "Test Cadence"
-        mock_cadence.modified = "2024-01-01"
-        
-        row1 = MagicMock()
-        row1.account = "Acc1"
-        row1.sender = "Sender1"
-        row1.apollo_id = None
-        
-        mock_cadence.get.return_value = [row1]
-        mock_get_doc.return_value = mock_cadence
-        
-        # Provider disabled
-        mock_db_get_value.side_effect = lambda dt, name, field: 0 if dt == "Cadence Provider" else "Authorized"
-        
-        def side_effect_reload():
-            mock_cadence.get.return_value = []
-        mock_cadence.reload.side_effect = side_effect_reload
-        
-        _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
-        
-        mock_wait_for_event.assert_called_once_with(
-            "doc:Cadence Provider:Apollo:on_update",
-            condition="argument.get('enabled') == 1",
-            consider_events_since="2024-01-01"
-        )
-        mock_cadence.reload.assert_called_once()
-        mock_client_cls.assert_not_called()
+		row1 = MagicMock(account="Acc1")
+		row1.get.side_effect = lambda k: "Sender1" if k == "sender" else None
+		row2 = MagicMock(account="Acc2")
+		row2.get.side_effect = lambda k: "Sender2" if k == "sender" else None
+		doc.get.return_value = [row1, row2]
 
-    @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
-    @patch("frappe.get_doc")
-    @patch("frappe.db.get_value")
-    @patch("frappe_controller.utils.controller.wait_for_event")
-    def test_provision_sequence_waits_for_account_authorization(self, mock_wait_for_event, mock_db_get_value, mock_get_doc, mock_client_cls):
-        mock_cadence = MagicMock()
-        mock_cadence.cadence_name = "Test Cadence"
-        mock_cadence.modified = "2024-01-01"
-        
-        row1 = MagicMock()
-        row1.account = "Acc1"
-        row1.sender = "Sender1"
-        row1.apollo_id = None
-        
-        mock_cadence.get.return_value = [row1]
-        mock_get_doc.return_value = mock_cadence
-        
-        # Provider enabled, Account unauthorized
-        mock_db_get_value.side_effect = lambda dt, name, field: 1 if dt == "Cadence Provider" else "Unauthorized"
-        
-        def side_effect_reload():
-            mock_cadence.get.return_value = []
-        mock_cadence.reload.side_effect = side_effect_reload
-        
-        _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
-        
-        mock_wait_for_event.assert_called_once_with(
-            "doc:Apollo Account:Acc1:on_update",
-            condition="argument.get('status') == 'Authorized'",
-            consider_events_since="2024-01-01"
-        )
-        mock_cadence.reload.assert_called_once()
-        mock_client_cls.assert_not_called()
+		mock_enqueue_field = MagicMock()
+		mock_get_attr.return_value = mock_enqueue_field
 
-    @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
-    @patch("frappe.get_doc")
-    @patch("frappe.db.get_value")
-    def test_provision_sequence_creates_new(self, mock_db_get_value, mock_get_doc, mock_client_cls):
-        mock_cadence = MagicMock()
-        mock_cadence.cadence_name = "Test Cadence"
-        
-        row1 = MagicMock()
-        row1.account = "Acc1"
-        row1.sender = "Sender1"
-        row1.apollo_id = None
-        row1.doctype = "Cadence Apollo ID"
-        row1.name = "row1"
-        
-        mock_cadence.get.return_value = [row1]
-        mock_get_doc.return_value = mock_cadence
-        
-        # Authorized
-        mock_db_get_value.side_effect = lambda dt, name, field: 1 if dt == "Cadence Provider" else "Authorized"
-        
-        mock_client = mock_client_cls.return_value
-        mock_client.create_sequence.return_value = "seq_123"
-        
-        _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
-        
-        mock_client.create_sequence.assert_called_once_with(
-            name="Test Cadence - Sender1",
-            permissions="team_can_use",
-            active=True,
-            emailer_steps=[]
-        )
-        self.assertEqual(row1.apollo_id, "seq_123")
-        mock_cadence.save.assert_called_once()
+		on_update(doc)
 
-    @patch("frappe.get_doc")
-    def test_get_sequence_steps(self, mock_get_doc):
-        mock_cadence = MagicMock()
-        mock_cadence.name = "Cad1"
-        
-        mock_sch1 = MagicMock()
-        mock_sch1.send_after_days = 2
-        mock_sch1.reference_doctype = "Email Template"
-        mock_sch1.name = "step1"
-        mock_sch1.get.side_effect = lambda k: "lbl_subject_step1" if k == "subject_field" else "lbl_message_step1"
-        
-        mock_sch2 = MagicMock()
-        mock_sch2.send_after_days = 3
-        mock_sch2.reference_doctype = "Other Channel"
-        mock_sch2.name = "step2"
-        
-        mock_sch3 = MagicMock()
-        mock_sch3.send_after_days = 1
-        mock_sch3.reference_doctype = "Email Template"
-        mock_sch3.name = "step3"
-        mock_sch3.get.side_effect = lambda k: "lbl_subject_step3" if k == "subject_field" else "lbl_message_step3"
-        
-        mock_cadence.cadence_schedules = [mock_sch1, mock_sch2, mock_sch3]
-        mock_cadence.get.side_effect = lambda k: mock_cadence.cadence_schedules if k == "cadence_schedules" else []
-        
-        mock_get_doc.return_value = mock_cadence
-        
-        emailer_steps = _get_sequence_steps("Cad1")
-        
-        expected_emailer_steps = [
-            {
-                "type": "auto_email",
-                "wait_time": 2,
-                "wait_mode": "day",
-                "emailer_touches": [{
-                    "type": "new_thread",
-                    "status": "approved",
-                    "include_signature": True,
-                    "emailer_template": {
-                        "subject": "{{lbl_subject_step1}}",
-                        "body_html": "{{lbl_message_step1}}"
-                    }
-                }]
-            },
-            {
-                "type": "auto_email",
-                "wait_time": 4, # 3 from Other Channel + 1 from Email Template
-                "wait_mode": "day",
-                "emailer_touches": [{
-                    "type": "new_thread",
-                    "status": "approved",
-                    "include_signature": True,
-                    "emailer_template": {
-                        "subject": "{{lbl_subject_step3}}",
-                        "body_html": "{{lbl_message_step3}}"
-                    }
-                }]
-            }
-        ]
-        
-        self.assertEqual(emailer_steps, expected_emailer_steps)
+		mock_validate.assert_has_calls([
+			call(doc, "Acc1"),
+			call(doc, "Acc2")
+		])
 
-    @patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
-    @patch("frappe.get_doc")
-    @patch("frappe.db.get_value")
-    @patch("frappe.log_error")
-    def test_provision_sequence_re_raises_exception(self, mock_log_error, mock_db_get_value, mock_get_doc, mock_client_cls):
-        mock_cadence = MagicMock()
-        mock_cadence.cadence_name = "Test Cadence"
-        row1 = MagicMock(account="Acc1", sender="Sender1", apollo_id=None)
-        mock_cadence.get.return_value = [row1]
-        mock_get_doc.return_value = mock_cadence
-        mock_db_get_value.side_effect = lambda dt, name, field: 1 if dt == "Cadence Provider" else "Authorized"
+		mock_enqueue_field.assert_has_calls([
+			call("Test Cadence", "Acc1", "Sender1"),
+			call("Test Cadence", "Acc2", "Sender2")
+		])
 
-        mock_client = mock_client_cls.return_value
-        mock_client.create_sequence.side_effect = Exception("API error")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence.enqueue")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence._validate_for_sequence")
+	@patch("frappe.get_attr")
+	def test_on_update_disabling_enqueues_disable_mccs(self, mock_get_attr, mock_validate, mock_enqueue):
+		doc = MagicMock()
+		doc.name = "Test Cadence"
+		doc.enabled = 0
+		doc.has_value_changed.side_effect = lambda k: True if k == "enabled" else False
+		doc.get.return_value = []
 
-        from frappe_apollo.apollo.doctype.cadence.cadence import _provision_sequence
-        with self.assertRaises(Exception):
-            _provision_sequence("Cad1", "Acc1", "Sender1", emailer_steps=[])
+		on_update(doc)
 
-        mock_log_error.assert_called_once()
+		mock_enqueue.assert_called_once_with(
+			"frappe_apollo.apollo.doctype.cadence.cadence._disable_cadence_mccs",
+			queue="low",
+			cadence_name="Test Cadence"
+		)
+
+	@patch("frappe.msgprint")
+	@patch("frappe.db.get_value")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
+	def test_validate_for_sequence_mismatch_disables_cadence(self, mock_client_cls, mock_db_get_value, mock_msgprint):
+		doc = MagicMock()
+		doc.name = "Test Cadence"
+
+		sch1 = MagicMock(channel="Email", reference_doctype="Email Template")
+		sch2 = MagicMock(channel="Email", reference_doctype="Email Template")
+		doc.get.side_effect = lambda k, d=[]: [sch1, sch2] if k == "cadence_schedules" else d
+
+		mock_db_get_value.return_value = "seq_123"
+
+		mock_client = mock_client_cls.return_value
+		mock_client.get_sequence.return_value = {"emailer_steps": [{"id": 1}]}
+
+		_validate_for_sequence(doc, "Acc1")
+
+		mock_msgprint.assert_called_once()
+		self.assertEqual(doc.enabled, 0)
+
+	@patch("frappe.msgprint")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
+	def test_validate_for_sequence_zero_steps_returns_early(self, mock_client_cls, mock_msgprint):
+		doc = MagicMock()
+		doc.get.side_effect = lambda k, d=[]: [] if k == "cadence_schedules" else d
+
+		_validate_for_sequence(doc, "Acc1")
+
+		mock_msgprint.assert_not_called()
+		mock_client_cls.assert_not_called()
+
+	@patch("frappe.msgprint")
+	@patch("frappe.db.get_value")
+	def test_validate_for_sequence_missing_sequence_id_disables(self, mock_db_get_value, mock_msgprint):
+		doc = MagicMock()
+		sch1 = MagicMock(channel="Email", reference_doctype="Email Template")
+		doc.get.side_effect = lambda k, d=[]: [sch1] if k == "cadence_schedules" else d
+
+		mock_db_get_value.return_value = None
+
+		_validate_for_sequence(doc, "Acc1")
+
+		mock_msgprint.assert_called_once()
+		self.assertEqual(doc.enabled, 0)
+
+	@patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._stop_contact_in_sequence")
+	@patch("frappe.get_doc")
+	@patch("frappe.get_all")
+	def test_disable_cadence_mccs(self, mock_get_all, mock_get_doc, mock_stop_contact):
+		mock_get_all.return_value = [{"name": "MCC-1"}]
+		mock_mcc = MagicMock()
+		mock_get_doc.return_value = mock_mcc
+
+		_disable_cadence_mccs("Cadence-1")
+
+		self.assertEqual(mock_mcc.status, "Disabled")
+		mock_mcc.save.assert_called_once_with(ignore_permissions=True)
+		mock_stop_contact.assert_called_once_with("MCC-1", mode="stop")

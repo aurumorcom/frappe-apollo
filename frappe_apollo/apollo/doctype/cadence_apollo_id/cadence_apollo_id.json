@@ -8,7 +8,6 @@
  "field_order": [
   "account",
   "sender",
-  "apollo_id",
   "status"
  ],
  "fields": [
@@ -27,12 +26,6 @@
    "label": "Sender",
    "options": "User",
    "reqd": 1
-  },
-  {
-   "fieldname": "apollo_id",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Apollo Sequence ID"
   },
   {
    "default": "Active",
