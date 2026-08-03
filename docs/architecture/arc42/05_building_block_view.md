@@ -22,11 +22,11 @@ Refer to [`c4/03-component.md`](../c4/03-component.md) for individual component 
 
 ```mermaid
 erDiagram
-    "Apollo Account" ||--o{ "Cadence Apollo ID" : "scopes_sequence"
+    "Apollo Account" ||--o{ "Cadence Apollo ID" : "scopes_sequence_account_assignment"
     "Apollo Account" ||--o{ "CRM Lead Apollo ID" : "scopes_contact"
     "Apollo Account" ||--o{ "Email Account Apollo ID" : "scopes_mailbox"
     "Apollo Account" ||--o{ "Apollo Field Apollo ID" : "scopes_custom_field"
-    "Cadence" ||--o{ "Cadence Apollo ID" : "contains_apollo_sequence_mappings"
+    "Cadence" ||--o{ "Cadence Apollo ID" : "assigns_apollo_account"
     "CRM Lead" ||--o{ "CRM Lead Apollo ID" : "contains_apollo_contact_mappings"
     "Email Account" ||--o{ "Email Account Apollo ID" : "contains_apollo_mailbox_mappings"
     "Apollo Field" ||--o{ "Apollo Field Apollo ID" : "contains_apollo_field_mappings"

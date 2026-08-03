@@ -42,8 +42,8 @@ flowchart TD
     
     %% Sequence Assignment Subflow (_assign_contact_to_sequence)
     EnqueueAddContact --> AssignSequence["Multi Channel Cadence _assign_contact_to_sequence()"]
-    AssignSequence --> CheckMCCSeqAccount{"MCC Account & Sequence ID Set?"}
-    CheckMCCSeqAccount -- No --> WaitMCCSeq["wait_for_event('Cadence on_update')"]
+    AssignSequence --> CheckMCCSeqAccount{"MCC Account Authorized & Sequence ID Set?"}
+    CheckMCCSeqAccount -- No --> WaitMCCSeq["wait_for_event('Apollo Account on_update')"]
     WaitMCCSeq -. Event Trigger .-> CheckMCCSeqAccount
     CheckMCCSeqAccount -- Yes --> CheckMCCUserEmail{"User Email Mapped for Sender?"}
     CheckMCCUserEmail -- No --> WaitMCCEmail["wait_for_event('User Email after_insert')"]
@@ -60,7 +60,6 @@ flowchart TD
 - **Multi Channel Cadence**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/multi_channel_cadence/multi_channel_cadence.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/multi_channel_cadence/multi_channel_cadence.py:5)
 - **CRM Lead**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/crm_lead/crm_lead.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/crm_lead/crm_lead.py:3)
 - **CRM Lead Apollo ID**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/crm_lead_apollo_id/crm_lead_apollo_id.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/crm_lead_apollo_id/crm_lead_apollo_id.py:1)
-- **Cadence**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/cadence/cadence.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/cadence/cadence.py:5)
 - **Communication**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/communication/communication.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/communication/communication.py:4)
 - **Apollo Account**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/apollo_account/apollo_account.py:5)
 - **ApolloClient**: [`apps/frappe_apollo/frappe_apollo/integrations/apollo.py`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:9)

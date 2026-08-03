@@ -6,11 +6,11 @@ This document defines the C3 Component ERD model for [`apps/frappe_apollo/frappe
 
 ```mermaid
 erDiagram
-    "Apollo Account" ||--o{ "Cadence Apollo ID" : "scopes_sequence"
+    "Apollo Account" ||--o{ "Cadence Apollo ID" : "scopes_sequence_account_assignment"
     "Apollo Account" ||--o{ "CRM Lead Apollo ID" : "scopes_contact"
     "Apollo Account" ||--o{ "Email Account Apollo ID" : "scopes_mailbox"
     "Apollo Account" ||--o{ "Apollo Field Apollo ID" : "scopes_custom_field"
-    "Cadence" ||--o{ "Cadence Apollo ID" : "contains_apollo_sequence_mappings"
+    "Cadence" ||--o{ "Cadence Apollo ID" : "assigns_apollo_account"
     "CRM Lead" ||--o{ "CRM Lead Apollo ID" : "contains_apollo_contact_mappings"
     "Email Account" ||--o{ "Email Account Apollo ID" : "contains_apollo_mailbox_mappings"
     "Apollo Field" ||--o{ "Apollo Field Apollo ID" : "contains_apollo_field_mappings"
@@ -37,6 +37,7 @@ erDiagram
   - `access_token`: Password (Hidden)
   - `expired`: Datetime (Read Only, Hidden)
   - `webhook_bearer_token`: Password
+  - `apollo_sequence_id`: Data
 
 #### `Cadence Apollo ID`
 - **File**: [`apps/frappe_apollo/frappe_apollo/apollo/doctype/cadence_apollo_id/cadence_apollo_id.py`](apps/frappe_apollo/frappe_apollo/apollo/doctype/cadence_apollo_id/cadence_apollo_id.py:1)
@@ -44,7 +45,6 @@ erDiagram
 - **Attributes**:
   - `account`: Link -> `Apollo Account`
   - `sender`: Link -> `User`
-  - `apollo_id`: Data (Apollo Sequence ID)
   - `status`: Select (`Active`, `Inactive`)
 
 #### `CRM Lead Apollo ID`
@@ -73,7 +73,6 @@ erDiagram
 - **Type**: Child Table (`istable: 1`) attached to `Apollo Field`
 - **Attributes**:
   - `account`: Link -> `Apollo Account`
-  - `apollo_sequence_id`: Data
   - `apollo_id`: Data (Apollo Custom Field ID)
 
 ### 2. Provider Integration & API Client
