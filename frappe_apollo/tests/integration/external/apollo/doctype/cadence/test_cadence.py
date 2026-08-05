@@ -32,6 +32,13 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
     @classmethod
     def tearDownClass(cls):
         frappe.db.rollback()
+        frappe.delete_doc_if_exists("Cadence", "Test VCR Cadence", force=True)
+        frappe.delete_doc_if_exists("Email Template", "Test Template", force=True)
+        frappe.delete_doc_if_exists("Apollo Field", "subject_1", force=True)
+        frappe.delete_doc_if_exists("Cadence Provider", "Apollo", force=True)
+        if getattr(cls, "account_name", None) == "Dummy VCR Account":
+            frappe.delete_doc_if_exists("Apollo Account", cls.account_name, force=True)
+        frappe.db.commit()
         super().tearDownClass()
 
     def setUp(self):
@@ -63,6 +70,12 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
 
     def tearDown(self):
         frappe.db.rollback()
+        frappe.delete_doc_if_exists("Cadence", "Test VCR Cadence", force=True)
+        frappe.delete_doc_if_exists("Email Template", "Test Template", force=True)
+        frappe.delete_doc_if_exists("Apollo Field", "subject_1", force=True)
+        if getattr(self, "account_name", None) == "Dummy VCR Account":
+            frappe.delete_doc_if_exists("Apollo Account", self.account_name, force=True)
+        frappe.db.commit()
         super().tearDown()
 
     def _skip_if_no_cassette(self, cassette_name):

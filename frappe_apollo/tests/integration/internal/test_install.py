@@ -14,10 +14,14 @@ class TestInstallIntegration(IntegrationTestCase):
 	@classmethod
 	def tearDownClass(cls):
 		frappe.db.rollback()
+		frappe.delete_doc_if_exists("Cadence Provider", "Apollo", force=True)
+		frappe.db.commit()
 		super().tearDownClass()
 
 	def tearDown(self):
 		frappe.db.rollback()
+		frappe.delete_doc_if_exists("Cadence Provider", "Apollo", force=True)
+		frappe.db.commit()
 		super().tearDown()
 
 	def test_after_install_integration(self):
