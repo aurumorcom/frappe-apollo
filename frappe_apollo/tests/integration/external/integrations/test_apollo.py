@@ -38,16 +38,29 @@ class TestApolloExternalAPI(IntegrationTestCase):
 
 	def setUp(self):
 		super().setUp()
-		doc = frappe.get_doc("Apollo Account", self.account_name) if frappe.db.exists("Apollo Account", self.account_name) else frappe.new_doc("Apollo Account")
-		doc.account_name = self.account_name
-		doc.status = "Authorized"
-		if self.account_name == "Dummy VCR Account":
+		if not frappe.db.exists("Apollo Account", self.account_name):
+			doc = frappe.new_doc("Apollo Account")
+			doc.account_name = self.account_name
+			doc.status = "Authorized"
+			if self.account_name == "Dummy VCR Account":
+				doc.api_key = "dummy_api_key_for_vcr"
+				doc.refresh_token = None
+				doc.access_token = None
+				doc.expired = None
+			doc.insert(ignore_permissions=True)
+		elif self.account_name == "Dummy VCR Account":
+			doc = frappe.get_doc("Apollo Account", self.account_name)
 			doc.api_key = "dummy_api_key_for_vcr"
 			doc.refresh_token = None
 			doc.access_token = None
 			doc.expired = None
-		doc.save(ignore_permissions=True)
+			doc.status = "Authorized"
+			doc.save(ignore_permissions=True)
 		self.client = ApolloClient(self.account_name)
+
+	def tearDown(self):
+		frappe.db.rollback()
+		super().tearDown()
 
 	def _cleanup_all_sequences(self):
 		res = self.client.search_sequences(per_page=100)
@@ -58,10 +71,6 @@ class TestApolloExternalAPI(IntegrationTestCase):
 					self.client.archive_sequence(seq["id"])
 				except Exception:
 					pass
-
-	def tearDown(self):
-		frappe.db.rollback()
-		super().tearDown()
 
 	@my_vcr.use_cassette('test_get_email_accounts.yaml')
 	def test_get_email_accounts_live(self):
@@ -82,7 +91,8 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			"last_name": "External API",
 			"email": "test_external_api_create@example.com"
 		}
-		contact_id = self.client.create_contact(lead_data)
+		contact_res = self.client.create_contact(lead_data)
+		contact_id = contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
 		self.assertIsNotNone(contact_id)
 
 	@my_vcr.use_cassette('test_create_custom_field.yaml')
@@ -100,7 +110,8 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			"last_name": "External API Update",
 			"email": "test_external_api_update@example.com"
 		}
-		contact_id = self.client.create_contact(lead_data)
+		contact_res = self.client.create_contact(lead_data)
+		contact_id = contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
 		self.assertIsNotNone(contact_id)
 
 		# Act: Update the contact
@@ -126,14 +137,21 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			"last_name": "External API Sequence",
 			"email": "test_external_api_sequence@example.com"
 		}
-		contact_id = self.client.create_contact(lead_data)
+		contact_res = self.client.create_contact(lead_data)
+		contact_id = contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
 		self.assertIsNotNone(contact_id)
 
-		# Act: Add to sequence
-		response = self.client.add_contacts_to_sequence(contact_id, self.sequence_id, mailbox_id)
+		try:
+			# Act: Add to sequence
+			response = self.client.add_contacts_to_sequence(contact_id, self.sequence_id, mailbox_id)
 
-		# Assert
-		self.assertIn("contacts", response)
+			# Assert
+			self.assertIn("contacts", response)
+		finally:
+			try:
+				self.client.update_contact_status_sequence(contact_id, self.sequence_id, "stop")
+			except Exception:
+				pass
 
 	@my_vcr.use_cassette('test_create_sequence.yaml')
 	def test_create_sequence_live(self):
@@ -168,11 +186,13 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		sequence_id = self.client.create_sequence(sequence_name, emailer_steps=emailer_steps)
 		self.assertIsNotNone(sequence_id)
 
-		# Teardown
 		try:
-			self.client.archive_sequence(sequence_id)
-		except Exception:
-			pass
+			self.assertEqual(isinstance(sequence_id, str), True)
+		finally:
+			try:
+				self.client.archive_sequence(sequence_id)
+			except Exception:
+				pass
 
 	@my_vcr.use_cassette('test_update_sequence.yaml')
 	def test_update_sequence_live(self):
@@ -193,41 +213,41 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		sequence_id = self.client.create_sequence("Test External Sequence Update VCR")
 		self.assertIsNotNone(sequence_id)
 
-		# Act: Update the sequence
-		emailer_steps = [{
-			"position": 1,
-			"type": "auto_email",
-			"wait_time": 1,
-			"wait_mode": "day",
-			"emailer_touches": [{
-				"type": "new_thread",
-				"status": "approved",
-				"include_signature": True,
-				"emailer_template": {
-					"subject": "{{subject_update}}",
-					"body_html": "{{message_update}}"
-				}
-			}]
-		}]
-		payload = {"emailer_steps": emailer_steps}
-		response = self.client.update_sequence(sequence_id, payload)
-
-		# Assert
-		self.assertIn("emailer_campaign", response)
-		updated_steps = response.get("emailer_campaign", {}).get("emailer_steps", [])
-		self.assertEqual(len(updated_steps), 1, "Steps should be updated in the sequence")
-
-		# Check touches
-		touches = response.get("emailer_touches", [])
-		self.assertEqual(len(touches), 1, "Email touches should be present in the response")
-		self.assertEqual(touches[0].get("status"), "approved", "Touch status should be approved")
-		self.assertEqual(touches[0].get("type"), "new_thread", "Touch type should be new_thread")
-
-		# Teardown
 		try:
-			self.client.archive_sequence(sequence_id)
-		except Exception:
-			pass
+			# Act: Update the sequence
+			emailer_steps = [{
+				"position": 1,
+				"type": "auto_email",
+				"wait_time": 1,
+				"wait_mode": "day",
+				"emailer_touches": [{
+					"type": "new_thread",
+					"status": "approved",
+					"include_signature": True,
+					"emailer_template": {
+						"subject": "{{subject_update}}",
+						"body_html": "{{message_update}}"
+					}
+				}]
+			}]
+			payload = {"emailer_steps": emailer_steps}
+			response = self.client.update_sequence(sequence_id, payload)
+
+			# Assert
+			self.assertIn("emailer_campaign", response)
+			updated_steps = response.get("emailer_campaign", {}).get("emailer_steps", [])
+			self.assertEqual(len(updated_steps), 1, "Steps should be updated in the sequence")
+
+			# Check touches
+			touches = response.get("emailer_touches", [])
+			self.assertEqual(len(touches), 1, "Email touches should be present in the response")
+			self.assertEqual(touches[0].get("status"), "approved", "Touch status should be approved")
+			self.assertEqual(touches[0].get("type"), "new_thread", "Touch type should be new_thread")
+		finally:
+			try:
+				self.client.archive_sequence(sequence_id)
+			except Exception:
+				pass
 
 	@my_vcr.use_cassette('test_apollo_refresh.yaml')
 	def test_proactive_token_refresh(self):
