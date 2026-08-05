@@ -15,12 +15,19 @@ class ApolloClient:
 		self.account_name = account_name
 		self.account = frappe.get_doc("Apollo Account", account_name)
 
-	def get_sequence(self, sequence_id):
-		endpoint = f"/emailer_campaigns/{sequence_id}"
+	def get_email_accounts(self):
+		endpoint = "/email_accounts"
 		return self._request("GET", endpoint)
 
+	def get_sequence(self, sequence_id):
+		try:
+			return self._request("GET", f"/sequences/{sequence_id}")
+		except requests.exceptions.HTTPError as e:
+			if e.response is not None and e.response.status_code in (404, 405):
+				return self._request("GET", f"/emailer_campaigns/{sequence_id}")
+			raise
+
 	def create_sequence(self, name, permissions="team_can_use", active=True, emailer_steps=None):
-		endpoint = "/emailer_campaigns"
 		payload = {
 			"name": name,
 			"permissions": permissions,
@@ -29,17 +36,29 @@ class ApolloClient:
 		if emailer_steps:
 			payload["emailer_steps"] = emailer_steps
 
-		res = self._request("POST", endpoint, json=payload)
+		try:
+			res = self._request("POST", "/sequences", json=payload)
+		except requests.exceptions.HTTPError as e:
+			if e.response is not None and e.response.status_code in (404, 405):
+				res = self._request("POST", "/emailer_campaigns", json=payload)
+			else:
+				raise
 		if isinstance(res, dict):
 			if "emailer_campaign" in res and isinstance(res["emailer_campaign"], dict):
 				return res["emailer_campaign"].get("id")
+			elif "sequence" in res and isinstance(res["sequence"], dict):
+				return res["sequence"].get("id")
 			elif "id" in res:
 				return res.get("id")
 		return None
 
 	def update_sequence(self, sequence_id, updates):
-		endpoint = f"/emailer_campaigns/{sequence_id}"
-		return self._request("PUT", endpoint, json=updates)
+		try:
+			return self._request("PUT", f"/sequences/{sequence_id}", json=updates)
+		except requests.exceptions.HTTPError as e:
+			if e.response is not None and e.response.status_code in (404, 405):
+				return self._request("PUT", f"/emailer_campaigns/{sequence_id}", json=updates)
+			raise
 
 	def approve_sequence(self, sequence_id):
 		return self.update_sequence(sequence_id, {"active": True})
@@ -84,10 +103,15 @@ class ApolloClient:
 		payload = {
 			"typed_custom_fields": custom_fields
 		}
-		return self._request("PUT", endpoint, json=payload)
+		try:
+			return self._request("PATCH", endpoint, json=payload)
+		except requests.exceptions.HTTPError as e:
+			if e.response is not None and e.response.status_code in (404, 405):
+				return self._request("PUT", endpoint, json=payload)
+			raise
 
 	def add_contacts_to_sequence(self, contact_id, sequence_id, mailbox_id):
-		endpoint = "/emailer_campaigns/add_contact_ids"
+		endpoint = f"/emailer_campaigns/{sequence_id}/add_contact_ids"
 		payload = {
 			"contact_ids": [contact_id],
 			"emailer_campaign_id": sequence_id,
@@ -96,13 +120,13 @@ class ApolloClient:
 		try:
 			return self._request("POST", endpoint, json=payload)
 		except requests.exceptions.HTTPError as e:
-			if e.response is not None and e.response.status_code == 400:
-				payload_singular = {
-					"contact_id": contact_id,
+			if e.response is not None and e.response.status_code in (400, 422, 404, 405):
+				params = {
+					"contact_ids[]": contact_id,
 					"emailer_campaign_id": sequence_id,
 					"send_email_from_email_account_id": mailbox_id
 				}
-				return self._request("POST", endpoint, json=payload_singular)
+				return self._request("POST", endpoint, params=params)
 			raise
 
 	def create_custom_field(self, label, field_type="string"):
