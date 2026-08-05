@@ -150,7 +150,7 @@ doc_events = {
 }
 
 scheduler_events = {
-	"all": [
+	"daily": [
 		"frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"
 	]
 }
