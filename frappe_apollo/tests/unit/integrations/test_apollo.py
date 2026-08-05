@@ -136,3 +136,23 @@ class TestApolloClient(UnitTestCase):
 		self.assertIsNone(mock_account.refresh_token)
 		mock_account.save.assert_called_once_with(ignore_permissions=True)
 		mock_commit.assert_called_once()
+
+	@patch("frappe.get_doc")
+	@patch("frappe_apollo.integrations.apollo.requests.request")
+	def test_get_email_accounts(self, mock_request, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.refresh_token = None
+		mock_account.get.return_value = None
+		mock_get_doc.return_value = mock_account
+
+		mock_response = MagicMock()
+		mock_response.status_code = 200
+		mock_response.json.return_value = {"email_accounts": [{"id": "mb1", "email": "test@example.com"}]}
+		mock_request.return_value = mock_response
+
+		client = ApolloClient("Test Account")
+		res = client.get_email_accounts()
+
+		self.assertIn("email_accounts", res)
+		self.assertEqual(len(res["email_accounts"]), 1)
+		mock_request.assert_called_once_with("GET", "https://api.apollo.io/api/v1/email_accounts", headers=client._get_headers())

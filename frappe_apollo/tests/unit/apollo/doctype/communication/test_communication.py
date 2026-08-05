@@ -132,10 +132,11 @@ class TestCommunicationOverride(UnitTestCase):
 		mock_provider.get.return_value = [mock_chan]
 
 		mock_cadence = MagicMock()
-		schedules = [
-			MagicMock(reference_doctype="Email Template", channel="Email", name=f"Sch-{i}")
-			for i in range(1, 6)
-		]
+		schedules = []
+		for i in range(1, 6):
+			m = MagicMock(reference_doctype="Email Template", channel="Email")
+			m.name = f"Sch-{i}"
+			schedules.append(m)
 		mock_cadence.get.side_effect = lambda k, d=[]: schedules if k == "cadence_schedules" else d
 
 		mock_get_doc.side_effect = [
