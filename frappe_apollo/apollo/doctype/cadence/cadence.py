@@ -22,6 +22,9 @@ def on_update(doc, method=None):
 			cadence_name=doc.name
 		)
 
+def on_trash(doc, method=None):
+	pass
+
 def _get_supported_channels():
 	try:
 		provider = frappe.get_doc("Cadence Provider", "Apollo")
