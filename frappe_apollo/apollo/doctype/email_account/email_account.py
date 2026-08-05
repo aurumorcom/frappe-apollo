@@ -7,14 +7,33 @@ def queue_get_email_accounts():
     RQ Job: A daily cron job that sweeps all active Accounts and enqueues the FS Job get_email_accounts for each.
     """
     accounts = frappe.get_all("Apollo Account", fields=["name"])
+    method_name = "frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts"
     for acc in accounts:
         doc = frappe.get_doc("Apollo Account", acc.name)
-        if doc.get_password("api_key", raise_exception=False) or doc.access_token:
-            frappe.enqueue(
-                method="frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts",
-                queue="low",
-                account_name=acc.name
-            )
+        if (
+            doc.get_password("api_key", raise_exception=False)
+            or doc.get_password("access_token", raise_exception=False)
+            or doc.access_token
+        ):
+            already_queued = False
+            if frappe.db.table_exists("FS Job"):
+                already_queued = bool(
+                    frappe.db.exists(
+                        "FS Job",
+                        {
+                            "job_name": method_name,
+                            "status": "queued",
+                            "arguments": ["like", f"%{acc.name}%"],
+                        },
+                    )
+                )
+
+            if not already_queued:
+                frappe.enqueue(
+                    method=method_name,
+                    queue="low",
+                    account_name=acc.name,
+                )
 
 def get_email_accounts(account_name):
     """
