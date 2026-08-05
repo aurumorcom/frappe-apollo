@@ -16,7 +16,6 @@ class TestCommunicationIntegration(IntegrationTestCase):
     def tearDown(self):
         frappe.db.rollback()
         super().tearDown()
-
     @patch("frappe_apollo.apollo.doctype.communication.communication.wait_for_event", side_effect=SuspendJob("wait"))
     @patch("frappe.db.get_value")
     @patch("frappe.get_doc")

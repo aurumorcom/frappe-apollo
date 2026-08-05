@@ -14,10 +14,14 @@ from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence im
 )
 
 
-class TestProviderEnablementDefects(IntegrationTestCase):
+class TestCadenceProvider(IntegrationTestCase):
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def tearDownClass(cls):
+        frappe.db.rollback()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
         if not frappe.db.exists("Cadence Provider", "Apollo"):
             frappe.get_doc({
                 "doctype": "Cadence Provider",
@@ -35,12 +39,9 @@ class TestProviderEnablementDefects(IntegrationTestCase):
                 "api_key": "test_key"
             }).insert(ignore_permissions=True)
 
-        frappe.db.commit()
-
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         frappe.db.rollback()
-        super().tearDownClass()
+        super().tearDown()
 
     @patch("frappe.get_doc")
     @patch("frappe.db.get_value")

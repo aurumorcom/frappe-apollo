@@ -20,7 +20,6 @@ class TestMCCIntegration(IntegrationTestCase):
     def tearDown(self):
         frappe.db.rollback()
         super().tearDown()
-
     @patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event", side_effect=SuspendJob("wait"))
     @patch("frappe.db.get_value")
     @patch("frappe.get_doc")
