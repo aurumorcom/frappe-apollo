@@ -113,3 +113,31 @@ class TestApolloAccount(UnitTestCase):
 		)
 		mock_account_doc.db_set.assert_called_once_with("apollo_sequence_id", "new_seq_001")
 		mock_account_doc.notify_update.assert_called_once()
+
+	@patch("frappe.log_error")
+	@patch("frappe_apollo.integrations.apollo.ApolloClient")
+	@patch("frappe.db.get_value")
+	def test_provision_sequence_handles_403_forbidden(self, mock_db_get_value, mock_client_cls, mock_log_error):
+		import requests
+
+		def db_get_value_side_effect(dt, name, field=None):
+			if field == "status":
+				return "Authorized"
+			if field == "apollo_sequence_id":
+				return None
+			return None
+
+		mock_db_get_value.side_effect = db_get_value_side_effect
+
+		mock_client = mock_client_cls.return_value
+		response_403 = MagicMock()
+		response_403.status_code = 403
+		error = requests.exceptions.HTTPError("403 Forbidden")
+		error.response = response_403
+		mock_client.search_sequences.side_effect = error
+
+		# Should not raise exception
+		provision_sequence("Acc1")
+
+		mock_log_error.assert_called_once()
+

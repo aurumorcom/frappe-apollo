@@ -9,8 +9,12 @@ from frappe_apollo.apollo.doctype.apollo_account.apollo_account import provision
 
 class TestApolloAccountIntegration(IntegrationTestCase):
 	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
+	def tearDownClass(cls):
+		frappe.db.rollback()
+		super().tearDownClass()
+
+	def setUp(self):
+		super().setUp()
 		if not frappe.db.exists("Apollo Account", "TestProvisionAccount"):
 			frappe.get_doc(
 				{
@@ -23,12 +27,10 @@ class TestApolloAccountIntegration(IntegrationTestCase):
 		else:
 			frappe.db.set_value("Apollo Account", "TestProvisionAccount", "status", "Unauthorized")
 			frappe.db.set_value("Apollo Account", "TestProvisionAccount", "apollo_sequence_id", None)
-		frappe.db.commit()
 
-	@classmethod
-	def tearDownClass(cls):
+	def tearDown(self):
 		frappe.db.rollback()
-		super().tearDownClass()
+		super().tearDown()
 
 	@patch("frappe_controller.utils.controller.wait_for_event")
 	def test_provision_sequence_suspends_when_unauthorized(self, mock_wait):

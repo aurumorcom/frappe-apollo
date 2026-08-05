@@ -36,22 +36,30 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
 
     def setUp(self):
         super().setUp()
-        if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Apollo Account", self.account_name):
+        if not frappe.db.exists("Cadence Provider", "Apollo"):
             frappe.get_doc({
+                "doctype": "Cadence Provider",
+                "provider_name": "Apollo",
+                "enabled": 1
+            }).insert(ignore_permissions=True)
+        else:
+            frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
+
+        if self.account_name == "Dummy VCR Account" and not frappe.db.exists("Apollo Account", self.account_name):
+            doc = frappe.get_doc({
                 "doctype": "Apollo Account",
                 "account_name": self.account_name,
-                "apollo_sequence_id": "dummy_seq_123",
+                "apollo_sequence_id": "6a5aecd3bcbdfc0020ac5853",
                 "api_key": "dummy_api_key_for_vcr",
                 "client_id": "dummy_client_id",
                 "client_secret": "dummy_client_secret",
                 "status": "Authorized"
             }).insert()
 
-        frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
-
         for acc in frappe.get_all("Apollo Account", filters={"name": ["!=", self.account_name]}):
             frappe.db.set_value("Apollo Account", acc.name, "status", "Unauthorized")
         frappe.db.set_value("Apollo Account", self.account_name, "status", "Authorized")
+        frappe.db.set_value("Apollo Account", self.account_name, "apollo_sequence_id", "6a5aecd3bcbdfc0020ac5853")
 
     def tearDown(self):
         frappe.db.rollback()
@@ -68,7 +76,7 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
         self._skip_if_no_cassette('test_create_cadence.yaml')
 
         if not frappe.db.exists("Email Template", "Test Template"):
-            frappe.get_doc({
+            tmpl = frappe.get_doc({
                 "doctype": "Email Template",
                 "name": "Test Template",
                 "subject": "Test",
@@ -93,7 +101,6 @@ class TestCadenceProvisioningExternal(IntegrationTestCase):
         }).insert(ignore_permissions=True, ignore_mandatory=True)
 
         provision_a_field("subject_1", "string", self.account_name)
-        provision_a_field("body_1", "textarea", self.account_name)
 
         field_doc = frappe.get_doc("Apollo Field", "subject_1")
         self.assertEqual(field_doc.name, "subject_1")

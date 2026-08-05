@@ -26,8 +26,13 @@ from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence im
 
 class TestApolloLifecycleE2E(IntegrationTestCase):
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def tearDownClass(cls):
+        frappe.db.rollback()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+
         if not frappe.db.exists("Cadence Provider", "Apollo"):
             frappe.get_doc({
                 "doctype": "Cadence Provider",
@@ -100,9 +105,9 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
                 "email": "lead1@example.com",
                 "apollo_ids": [{"account": "TestAccount1", "apollo_id": ""}]
             }).insert(ignore_permissions=True, ignore_mandatory=True)
-            cls.lead_id = lead.name
+            self.lead_id = lead.name
         else:
-            cls.lead_id = lead_id
+            self.lead_id = lead_id
 
         if not frappe.db.exists("Email Template", "Test Template"):
             frappe.get_doc({
@@ -112,30 +117,8 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
                 "response": "Test Response"
             }).insert(ignore_permissions=True)
 
-        frappe.db.commit()
-
-    @classmethod
-    def tearDownClass(cls):
-        frappe.db.rollback()
-        super().tearDownClass()
-
-    def setUp(self):
-        super().setUp()
-        frappe.db.delete("Multi Channel Cadence")
-        frappe.db.delete("Cadence")
-        frappe.db.delete("Apollo Field")
-        frappe.db.delete("Communication", {"reference_doctype": "Multi Channel Cadence"})
-        frappe.db.commit()
-        frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 0)
-        frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Unauthorized")
-        frappe.db.set_value("Apollo Account", "TestAccount2", "status", "Authorized")
-
     def tearDown(self):
-        frappe.db.delete("Multi Channel Cadence")
-        frappe.db.delete("Cadence")
-        frappe.db.delete("Apollo Field")
-        frappe.db.delete("Communication", {"reference_doctype": "Multi Channel Cadence"})
-        frappe.db.commit()
+        frappe.db.rollback()
         super().tearDown()
 
     def _create_test_cadence(self):
@@ -186,7 +169,6 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
         field_doc = frappe.get_doc("Apollo Field", "subject_1")
         self.assertTrue(any(r.account == "TestAccount2" and r.apollo_id == "custom_field_555" for r in field_doc.apollo_ids))
-
 
     def test_mcc_draft_reassignment(self):
         cadence = self._create_test_cadence()
@@ -245,7 +227,6 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
                 lead.append("apollo_ids", {"account": "TestAccount2", "apollo_id": "apollo_contact_1"})
         lead.flags.ignore_mandatory = True
         lead.save(ignore_permissions=True)
-        frappe.db.commit()
 
         frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
         frappe.db.set_value("Apollo Account", "TestAccount2", "status", "Authorized")

@@ -10,7 +10,6 @@ from frappe_apollo.webhook import handle, process_webhook
 class TestWebhookIntegration(IntegrationTestCase):
     def setUp(self):
         super().setUp()
-        frappe.db.rollback()
 
         lead_email = f"webhook_{frappe.generate_hash(length=6)}@example.com"
         account_name = f"Webhook Account {frappe.generate_hash(length=6)}"
@@ -50,9 +49,14 @@ class TestWebhookIntegration(IntegrationTestCase):
         self.lead_name = lead.name
         self.mcc_name = mcc.name
         self.cadence_name = cadence.name
-        self.addCleanup(frappe.db.rollback)
+
+    @classmethod
+    def tearDownClass(cls):
+        frappe.db.rollback()
+        super().tearDownClass()
 
     def tearDown(self):
+        frappe.db.rollback()
         super().tearDown()
 
     @patch("frappe.get_request_header")

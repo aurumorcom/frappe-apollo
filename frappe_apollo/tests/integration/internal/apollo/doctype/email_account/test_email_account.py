@@ -10,29 +10,38 @@ from frappe_apollo.apollo.doctype.email_account.email_account import (
 
 
 class TestEmailAccountIntegration(IntegrationTestCase):
+    @classmethod
+    def tearDownClass(cls):
+        frappe.db.rollback()
+        super().tearDownClass()
+
     def setUp(self):
         super().setUp()
-        frappe.db.rollback()
+
+        if frappe.db.table_exists("FS Job"):
+            frappe.db.delete("FS Job")
 
         self.acc1 = f"Mailbox Test Acc {frappe.generate_hash(length=6)}"
         self.acc2 = f"Another Test Acc {frappe.generate_hash(length=6)}"
         self.email1 = f"test1_{frappe.generate_hash(length=6)}@example.com"
 
-        frappe.get_doc({
+        doc1 = frappe.get_doc({
             "doctype": "Apollo Account",
             "account_name": self.acc1,
             "api_key": "some_key"
         }).insert(ignore_permissions=True)
 
-        frappe.get_doc({
+        doc2 = frappe.get_doc({
             "doctype": "Apollo Account",
             "account_name": self.acc2,
             "api_key": "some_key"
         }).insert(ignore_permissions=True)
 
-        self.addCleanup(frappe.db.rollback)
+        if frappe.db.table_exists("FS Job"):
+            frappe.db.delete("FS Job")
 
     def tearDown(self):
+        frappe.db.rollback()
         super().tearDown()
 
     @patch("frappe.enqueue")
@@ -44,6 +53,66 @@ class TestEmailAccountIntegration(IntegrationTestCase):
                 found = True
                 break
         self.assertTrue(found, f"get_email_accounts was not queued for {self.acc1}")
+
+    @patch("frappe.enqueue")
+    def test_queue_get_email_accounts_deduplication_when_queued(self, mock_enqueue):
+        if frappe.db.table_exists("FS Job"):
+            method_name = "frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts"
+
+            job_type_name = frappe.db.exists("Controller Job Type", {"method": method_name})
+            if not job_type_name:
+                job_type_name = frappe.get_doc({
+                    "doctype": "Controller Job Type",
+                    "method": method_name,
+                }).insert(ignore_permissions=True).name
+
+            job = frappe.get_doc({
+                "doctype": "FS Job",
+                "job_type": job_type_name,
+                "job_name": method_name,
+                "status": "queued",
+                "arguments": f'{{"account_name": "{self.acc1}"}}'
+            }).insert(ignore_permissions=True)
+
+        queue_get_email_accounts()
+
+        queued_accounts = [call[1].get("account_name") for call in mock_enqueue.call_args_list]
+        self.assertNotIn(self.acc1, queued_accounts, f"get_email_accounts was queued for {self.acc1} despite existing queued FS Job")
+        self.assertIn(self.acc2, queued_accounts, f"get_email_accounts was not queued for {self.acc2}")
+
+    @patch("frappe.enqueue")
+    def test_queue_get_email_accounts_no_deduplication_when_finished(self, mock_enqueue):
+        if frappe.db.table_exists("FS Job"):
+            method_name = "frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts"
+
+            job_type_name = frappe.db.exists("Controller Job Type", {"method": method_name})
+            if not job_type_name:
+                job_type_name = frappe.get_doc({
+                    "doctype": "Controller Job Type",
+                    "method": method_name,
+                }).insert(ignore_permissions=True).name
+
+            job = frappe.get_doc({
+                "doctype": "FS Job",
+                "job_type": job_type_name,
+                "job_name": method_name,
+                "status": "finished",
+                "arguments": f'{{"account_name": "{self.acc1}"}}'
+            }).insert(ignore_permissions=True)
+
+        queue_get_email_accounts()
+
+        queued_accounts = [call[1].get("account_name") for call in mock_enqueue.call_args_list]
+        self.assertIn(self.acc1, queued_accounts, f"get_email_accounts should have been queued for {self.acc1}")
+
+    def test_scheduler_hook_registered_as_daily(self):
+        scheduler_events = frappe.get_hooks("scheduler_events")
+        daily_events = scheduler_events.get("daily", [])
+        all_events = scheduler_events.get("all", [])
+
+        target_method = "frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"
+        self.assertIn(target_method, daily_events, "queue_get_email_accounts should be registered in scheduler_events['daily']")
+        self.assertNotIn(target_method, all_events, "queue_get_email_accounts should not be registered in scheduler_events['all']")
 
     @patch("frappe_apollo.integrations.apollo.ApolloClient")
     def test_get_email_accounts_creation(self, mock_client_cls):
@@ -74,7 +143,7 @@ class TestEmailAccountIntegration(IntegrationTestCase):
 
     @patch("frappe_apollo.integrations.apollo.ApolloClient")
     def test_get_email_accounts_append(self, mock_client_cls):
-        frappe.get_doc({
+        emb = frappe.get_doc({
             "doctype": "Email Account",
             "email_id": self.email1,
             "service": "Apollo",
