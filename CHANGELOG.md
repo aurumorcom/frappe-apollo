@@ -1,11 +1,26 @@
-# Changelog v16.5.0
-
 ## Features
 
-* **Apollo Sequence Provisioning**: Added automated sequence provisioning triggered upon account authorization, enqueuing a background job when an `ApolloAccount` status transitions to `Authorized` (Commits: [9a7e7a1](https://github.com/aurumorinc/frappe-apollo/commit/9a7e7a1f), [dbd0e0b](https://github.com/aurumorinc/frappe-apollo/commit/dbd0e0bf)).
+- **Apollo Error Handling**
+  - Added comprehensive error handling for Apollo API requests and fallback support for legacy endpoints.
+  - Commits: [29dcc1e](https://github.com/aurumorinc/frappe-apollo/commit/29dcc1ed), [22a00bc](https://github.com/aurumorinc/frappe-apollo/commit/22a00bc2), [df21f53](https://github.com/aurumorinc/frappe-apollo/commit/df21f538)
 
 ## Improvements
 
-* **Apollo Cadence Refactoring**: Simplified cadence and field provisioning to utilize a single generic Apollo sequence per account with dynamic step management (Commits: [500d518](https://github.com/aurumorinc/frappe-apollo/commit/500d5180), [0976a5a](https://github.com/aurumorinc/frappe-apollo/commit/0976a5a1), [72e99ba](https://github.com/aurumorinc/frappe-apollo/commit/72e99bad)).
-* **Apollo Testing**: Added and updated comprehensive unit and integration test suites covering the `ApolloAccount` provisioning workflow and sequence step management (Commits: [38f64b7](https://github.com/aurumorinc/frappe-apollo/commit/38f64b77), [3fc6c53](https://github.com/aurumorinc/frappe-apollo/commit/3fc6c531), [738cd5f](https://github.com/aurumorinc/frappe-apollo/commit/738cd5f4)).
-* **Code Formatting**: Applied PEP 8 import ordering rules, removed trailing whitespace, and cleaned up comments across source and test files (Commits: [64dac44](https://github.com/aurumorinc/frappe-apollo/commit/64dac446), [2fcf875](https://github.com/aurumorinc/frappe-apollo/commit/2fcf8753), [5b0fd78](https://github.com/aurumorinc/frappe-apollo/commit/5b0fd780)).
+- **Test Cleanup Refactoring**
+  - Cleaned up test documents in teardown methods and removed unused helper methods.
+  - Commits: [ad040d9](https://github.com/aurumorinc/frappe-apollo/commit/ad040d95), [b1c3b7f](https://github.com/aurumorinc/frappe-apollo/commit/b1c3b7ff), [863a36c](https://github.com/aurumorinc/frappe-apollo/commit/863a36c)
+- **Cadence Doctype Hook**
+  - Added an empty `on_trash` hook method to the Cadence doctype.
+  - Commit: [6cceaab](https://github.com/aurumorinc/frappe-apollo/commit/6cceaabb)
+
+## Infrastructure
+
+- **Email Queue Schedule**
+  - Changed the email queue schedule to run daily and added duplicate prevention logic.
+  - Commits: [dc8c619](https://github.com/aurumorinc/frappe-apollo/commit/dc8c619e), [ab43478](https://github.com/aurumorinc/frappe-apollo/commit/ab434786)
+
+## Docs
+
+- **Framework-Bench Rules**
+  - Added framework-bench development standards and repository map to `AGENTS.md`.
+  - Commit: [c93b77c](https://github.com/aurumorinc/frappe-apollo/commit/c93b77c0)
