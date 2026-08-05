@@ -21,11 +21,15 @@ class TestOAuth(IntegrationTestCase):
 	@classmethod
 	def tearDownClass(cls):
 		frappe.db.rollback()
+		frappe.delete_doc_if_exists("Apollo Account", "Test Account OAuth", force=True)
+		frappe.db.commit()
 		frappe.local.conf.pop("encryption_key", None)
 		super().tearDownClass()
 
 	def tearDown(self):
 		frappe.db.rollback()
+		frappe.delete_doc_if_exists("Apollo Account", "Test Account OAuth", force=True)
+		frappe.db.commit()
 		super().tearDown()
 
 	@patch("frappe_apollo.oauth.requests.post")
