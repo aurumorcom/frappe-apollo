@@ -88,8 +88,11 @@ def provision_a_field(label, apollo_type, account_name):
 				)
 				field_doc.save(ignore_permissions=True)
 		except Exception as e:
-			frappe.log_error(title="Apollo Field Creation Failed", message=str(e))
-			raise
+			if hasattr(e, "response") and getattr(e.response, "status_code", None) in (400, 422, 401, 403):
+				frappe.log_error(title="Apollo Field Creation Skipped", message=str(e))
+			else:
+				frappe.log_error(title="Apollo Field Creation Failed", message=str(e))
+				raise
 
 	apollo_sequence_id = frappe.db.get_value("Apollo Account", account_name, "apollo_sequence_id")
 	if not apollo_sequence_id:
@@ -109,16 +112,19 @@ def _update_sequence(client, sequence_id, label):
 	except ValueError, IndexError:
 		field_index = 1
 
-	sequence_info = client.get_sequence(sequence_id)
-	emailer_steps = (
-		sequence_info.get("emailer_steps", [])
-		if isinstance(sequence_info, dict) and "emailer_steps" in sequence_info
-		else (
-			sequence_info.get("sequence", {}).get("emailer_steps", [])
-			if isinstance(sequence_info, dict)
-			else []
+	try:
+		sequence_info = client.get_sequence(sequence_id)
+		emailer_steps = (
+			sequence_info.get("emailer_steps", [])
+			if isinstance(sequence_info, dict) and "emailer_steps" in sequence_info
+			else (
+				sequence_info.get("sequence", {}).get("emailer_steps", [])
+				if isinstance(sequence_info, dict)
+				else []
+			)
 		)
-	)
+	except Exception:
+		emailer_steps = []
 
 	if len(emailer_steps) >= field_index:
 		return
