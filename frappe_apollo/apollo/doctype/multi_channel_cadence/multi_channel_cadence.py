@@ -216,6 +216,6 @@ def _stop_contact_in_sequence(mcc_name, mode="stop"):
 
 	client = ApolloClient(account_name)
 	try:
-		client.update_contact_status_sequence(contact_apollo_id, sequence_id, mode)
+		client.update_sequence_contact_status(contact_apollo_id, sequence_id, mode)
 	except Exception as e:
 		frappe.log_error(title="Failed to stop contact in Apollo sequence", message=str(e))

@@ -577,7 +577,7 @@ frappe_apollo/integrations/apollo.py:
 ⋮
 │	def create_custom_field(self, label, field_type="string"):
 ⋮
-│	def update_contact_status_sequence(self, person_id, sequence_id, action):
+│	def update_sequence_contact_status(self, person_id, sequence_id, action):
 ⋮
 │	def _request(self, method, endpoint, **kwargs):
 ⋮

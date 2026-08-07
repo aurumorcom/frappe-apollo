@@ -146,7 +146,7 @@ class ApolloClient:
 		}
 		return self._request("POST", "/fields", json=payload)
 
-	def update_contact_status_sequence(self, person_id, sequence_id, action):
+	def update_sequence_contact_status(self, person_id, sequence_id, action):
 		endpoint = "/emailer_campaigns/remove_or_stop_contact_ids"
 		payload = {
 			"contact_ids[]": [person_id],

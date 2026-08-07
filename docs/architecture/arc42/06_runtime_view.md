@@ -73,7 +73,7 @@ flowchart TD
     WaitMCCPrereqs --> AddToSeqAPI["ApolloClient add_contacts_to_sequence()"]
     
     MCCDisabled(["Multi Channel Cadence -> 'Disabled/Stopped'"]) --> EnqueueStopContact["Enqueue _stop_contact_in_sequence()"]
-    EnqueueStopContact --> UpdateContactSeqStatus["ApolloClient update_contact_status_sequence()"]
+    EnqueueStopContact --> UpdateContactSeqStatus["ApolloClient update_sequence_contact_status()"]
     end
 
     %% Communication Sync
