@@ -85,7 +85,7 @@ class TestCRMLead(UnitTestCase):
 
         mock_enqueue.assert_called_once_with(
             method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.create_a_contact",
-            queue="short",
+            queue="low",
             lead_name="lead1",
             account_name="Acc1"
         )
@@ -134,7 +134,7 @@ class TestCRMLead(UnitTestCase):
 
         mock_enqueue.assert_called_once_with(
             method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.update_a_contact",
-            queue="short",
+            queue="low",
             lead_name="lead1",
             account_name="Acc1"
         )
