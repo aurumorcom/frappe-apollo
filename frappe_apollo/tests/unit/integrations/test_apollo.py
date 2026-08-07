@@ -156,3 +156,38 @@ class TestApolloClient(UnitTestCase):
 		self.assertIn("email_accounts", res)
 		self.assertEqual(len(res["email_accounts"]), 1)
 		mock_request.assert_called_once_with("GET", "https://api.apollo.io/api/v1/email_accounts", headers=client._get_headers())
+
+	@patch("frappe.get_doc")
+	def test_get_sequence_success(self, mock_get_doc):
+		mock_account = MagicMock()
+		mock_get_doc.return_value = mock_account
+
+		client = ApolloClient("Test Account")
+		target_seq = {"id": "seq_123", "name": "Target", "emailer_steps": [{"id": "step_1"}]}
+		with patch.object(client, "search_sequences") as mock_search:
+			mock_search.return_value = {
+				"pagination": {"total_pages": 1},
+				"emailer_campaigns": [target_seq]
+			}
+			res = client.get_sequence("seq_123")
+
+			self.assertEqual(res["emailer_campaign"], target_seq)
+			self.assertEqual(res["emailer_steps"], [{"id": "step_1"}])
+			mock_search.assert_called_once_with(page=1, per_page=100)
+
+	@patch("frappe.get_doc")
+	def test_get_sequence_not_found(self, mock_get_doc):
+		mock_account = MagicMock()
+		mock_get_doc.return_value = mock_account
+
+		client = ApolloClient("Test Account")
+		with patch.object(client, "search_sequences") as mock_search:
+			mock_search.return_value = {
+				"pagination": {"total_pages": 1},
+				"emailer_campaigns": [{"id": "seq_other", "name": "Other"}]
+			}
+			res = client.get_sequence("seq_missing")
+
+			self.assertEqual(res["emailer_campaign"], {})
+			self.assertEqual(res["emailer_steps"], [])
+			mock_search.assert_called_once_with(page=1, per_page=100)
