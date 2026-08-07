@@ -6,8 +6,7 @@ from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.crm_lead.crm_lead import _create_a_contact
 from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (
-    _assign_contact_to_sequence,
-    add_a_contact_to_sequence,
+    add_contact_to_sequence,
 )
 
 
@@ -64,7 +63,7 @@ class TestMCCIntegration(IntegrationTestCase):
         mock_get_all.side_effect = lambda *args, **kwargs: [frappe._dict({"apollo_id": "pid1"})] if args[0] == "CRM Lead Apollo ID" else []
 
         with self.assertRaises(SuspendJob):
-            _assign_contact_to_sequence("mcc1")
+            add_contact_to_sequence("mcc1")
 
     @patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event", side_effect=SuspendJob("wait"))
     @patch("frappe.db.get_value")
@@ -122,6 +121,6 @@ class TestMCCIntegration(IntegrationTestCase):
         mock_client_class.return_value = mock_client
 
         _create_a_contact("mcc1")
-        _assign_contact_to_sequence("mcc1")
+        add_contact_to_sequence("mcc1")
 
         mock_client.add_contacts_to_sequence.assert_called_once_with("pid1", "seq1", "mb_apollo_1")

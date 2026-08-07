@@ -10,7 +10,7 @@ from frappe_apollo.apollo.doctype.cadence_provider.cadence_provider import (
 )
 from frappe_apollo.apollo.doctype.crm_lead.crm_lead import create_a_contact, update_a_contact
 from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (
-    _assign_contact_to_sequence,
+    add_contact_to_sequence,
 )
 
 
@@ -113,7 +113,7 @@ class TestCadenceProvider(IntegrationTestCase):
         mock_get_doc.return_value = mock_mcc
 
         with self.assertRaises(SuspendJob):
-            _assign_contact_to_sequence("MCC-1")
+            add_contact_to_sequence("MCC-1")
 
         mock_wait.assert_called_once_with(
             event_key="doc:Cadence Provider:Apollo:on_update",

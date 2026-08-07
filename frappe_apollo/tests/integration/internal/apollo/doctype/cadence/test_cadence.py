@@ -16,7 +16,7 @@ from frappe_apollo.apollo.doctype.crm_lead.crm_lead import (
     update_a_contact,
 )
 from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (
-    _assign_contact_to_sequence,
+    add_contact_to_sequence,
     before_save,
 )
 from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (
@@ -232,5 +232,5 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
         frappe.db.set_value("Apollo Account", "TestAccount2", "status", "Authorized")
 
         mock_client = mock_client_cls.return_value
-        _assign_contact_to_sequence(mcc.name)
+        add_contact_to_sequence(mcc.name)
         mock_client.add_contacts_to_sequence.assert_called_once_with("apollo_contact_1", "seq_account_2", "mailbox_1")
