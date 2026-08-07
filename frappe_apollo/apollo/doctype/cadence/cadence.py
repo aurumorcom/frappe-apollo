@@ -15,9 +15,9 @@ def on_update(doc, method=None):
 			doc.name, row.account, row.get("sender")
 		)
 
-	if doc.has_value_changed("enabled") and not doc.enabled:
+	if doc.has_value_changed("enabled"):
 		enqueue(
-			"frappe_apollo.apollo.doctype.cadence.cadence._disable_cadence_mccs",
+			"frappe_apollo.apollo.doctype.cadence.cadence.toggle_cadence_mccs",
 			queue="low",
 			cadence_name=doc.name
 		)
@@ -93,23 +93,44 @@ def _validate_for_sequence(doc, account_name):
 		if hasattr(doc, "db_set"):
 			doc.db_set("enabled", 0)
 
-def _disable_cadence_mccs(cadence_name):
-	active_mccs = frappe.get_all(
-		"Multi Channel Cadence",
-		filters={
-			"cadence_name": cadence_name,
-			"status": ["in", ["Scheduled", "In Progress", "Active"]]
-		},
-		fields=["name"]
-	)
-	for mcc in active_mccs:
-		mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)
-		if not mcc_name:
-			continue
-		mcc_doc = frappe.get_doc("Multi Channel Cadence", mcc_name)
-		mcc_doc.status = "Disabled"
-		mcc_doc.save(ignore_permissions=True)
-		from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (
-			_stop_contact_in_sequence,
+def toggle_cadence_mccs(cadence_name):
+	cadence_doc = frappe.get_doc("Cadence", cadence_name)
+
+	if not cadence_doc.enabled:
+		active_mccs = frappe.get_all(
+			"Multi Channel Cadence",
+			filters={
+				"cadence_name": cadence_name,
+				"status": ["in", ["Scheduled", "In Progress", "Active", "Draft"]]
+			},
+			fields=["name"]
 		)
-		_stop_contact_in_sequence(mcc_name, mode="stop")
+		for mcc in active_mccs:
+			mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)
+			if not mcc_name:
+				continue
+			mcc_doc = frappe.get_doc("Multi Channel Cadence", mcc_name)
+			mcc_doc.last_status = mcc_doc.status
+			mcc_doc.status = "Disabled"
+			mcc_doc.save(ignore_permissions=True)
+	else:
+		disabled_mccs = frappe.get_all(
+			"Multi Channel Cadence",
+			filters={
+				"cadence_name": cadence_name,
+				"status": "Disabled"
+			},
+			fields=["name"]
+		)
+		for mcc in disabled_mccs:
+			mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)
+			if not mcc_name:
+				continue
+			mcc_doc = frappe.get_doc("Multi Channel Cadence", mcc_name)
+			if mcc_doc.last_status:
+				mcc_doc.status = mcc_doc.last_status
+				mcc_doc.last_status = None
+				mcc_doc.save(ignore_permissions=True)
+
+
+_disable_cadence_mccs = toggle_cadence_mccs
