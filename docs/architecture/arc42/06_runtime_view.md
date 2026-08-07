@@ -59,7 +59,7 @@ flowchart TD
     %% Contact Sync & Sequence Assignment
     subgraph Contact Sync & Sequence Assignment
     MCCScheduled(["Multi Channel Cadence -> 'Scheduled'"]) --> LoadBalanceAccount["before_save Load Balance Sender Accounts"]
-    LoadBalanceAccount --> EnqueueAddContact["Enqueue _assign_contact_to_sequence() & _create_a_contact()"]
+    LoadBalanceAccount --> EnqueueAddContact["Enqueue add_contact_to_sequence() & _create_a_contact()"]
     
     EnqueueAddContact --> CreateContactTask["CRM Lead _create_a_contact()"]
     CreateContactTask --> WaitLeadPrereqs["wait_for_event(User Email / Account)"]
@@ -68,7 +68,7 @@ flowchart TD
     CallCreateContactAPI --> SaveLeadApolloID["Store in CRM Lead Apollo ID"]
     CheckLeadApolloID -- Yes --> CallUpdateContactAPI["ApolloClient update_contact()"]
     
-    EnqueueAddContact --> AssignSequence["Multi Channel Cadence _assign_contact_to_sequence()"]
+    EnqueueAddContact --> AssignSequence["Multi Channel Cadence add_contact_to_sequence()"]
     AssignSequence --> WaitMCCPrereqs["wait_for_event(Account Auth / CRM Lead Apollo ID)"]
     WaitMCCPrereqs --> AddToSeqAPI["ApolloClient add_contacts_to_sequence()"]
     

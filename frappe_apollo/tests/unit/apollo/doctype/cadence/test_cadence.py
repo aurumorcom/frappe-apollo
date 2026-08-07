@@ -4,9 +4,9 @@ import frappe
 from frappe.tests import UnitTestCase
 
 from frappe_apollo.apollo.doctype.cadence.cadence import (
-	_disable_cadence_mccs,
 	_validate_for_sequence,
 	on_update,
+	toggle_cadence_mccs,
 )
 
 
@@ -42,7 +42,7 @@ class TestCadenceProvisioning(UnitTestCase):
 	@patch("frappe_apollo.apollo.doctype.cadence.cadence.enqueue")
 	@patch("frappe_apollo.apollo.doctype.cadence.cadence._validate_for_sequence")
 	@patch("frappe.get_attr")
-	def test_on_update_disabling_enqueues_disable_mccs(self, mock_get_attr, mock_validate, mock_enqueue):
+	def test_on_update_disabling_enqueues_toggle_mccs(self, mock_get_attr, mock_validate, mock_enqueue):
 		doc = MagicMock()
 		doc.name = "Test Cadence"
 		doc.enabled = 0
@@ -52,7 +52,7 @@ class TestCadenceProvisioning(UnitTestCase):
 		on_update(doc)
 
 		mock_enqueue.assert_called_once_with(
-			"frappe_apollo.apollo.doctype.cadence.cadence._disable_cadence_mccs",
+			"frappe_apollo.apollo.doctype.cadence.cadence.toggle_cadence_mccs",
 			queue="low",
 			cadence_name="Test Cadence"
 		)
@@ -103,16 +103,30 @@ class TestCadenceProvisioning(UnitTestCase):
 		mock_msgprint.assert_called_once()
 		self.assertEqual(doc.enabled, 0)
 
-	@patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._stop_contact_in_sequence")
 	@patch("frappe.get_doc")
 	@patch("frappe.get_all")
-	def test_disable_cadence_mccs(self, mock_get_all, mock_get_doc, mock_stop_contact):
+	def test_toggle_cadence_mccs_disabling(self, mock_get_all, mock_get_doc):
+		mock_cadence = MagicMock(enabled=0)
+		mock_mcc = MagicMock(status="In Progress", last_status=None)
+		mock_get_doc.side_effect = lambda dt, name: mock_cadence if dt == "Cadence" else mock_mcc
 		mock_get_all.return_value = [{"name": "MCC-1"}]
-		mock_mcc = MagicMock()
-		mock_get_doc.return_value = mock_mcc
 
-		_disable_cadence_mccs("Cadence-1")
+		toggle_cadence_mccs("Cadence-1")
 
+		self.assertEqual(mock_mcc.last_status, "In Progress")
 		self.assertEqual(mock_mcc.status, "Disabled")
 		mock_mcc.save.assert_called_once_with(ignore_permissions=True)
-		mock_stop_contact.assert_called_once_with("MCC-1", mode="stop")
+
+	@patch("frappe.get_doc")
+	@patch("frappe.get_all")
+	def test_toggle_cadence_mccs_enabling(self, mock_get_all, mock_get_doc):
+		mock_cadence = MagicMock(enabled=1)
+		mock_mcc = MagicMock(status="Disabled", last_status="In Progress")
+		mock_get_doc.side_effect = lambda dt, name: mock_cadence if dt == "Cadence" else mock_mcc
+		mock_get_all.return_value = [{"name": "MCC-1"}]
+
+		toggle_cadence_mccs("Cadence-1")
+
+		self.assertEqual(mock_mcc.status, "In Progress")
+		self.assertIsNone(mock_mcc.last_status)
+		mock_mcc.save.assert_called_once_with(ignore_permissions=True)

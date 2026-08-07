@@ -170,6 +170,16 @@ controller_events = {
 		"retries": 3,
 		"timeout": 300
 	},
+	"frappe_apollo.apollo.doctype.apollo_field.apollo_field.provision_a_field": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.apollo_field.apollo_field.enqueue_provision_cadence_fields": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
 	"frappe_apollo.webhook.process_webhook": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
@@ -186,6 +196,61 @@ controller_events = {
 		"timeout": 300
 	},
 	"frappe_apollo.apollo.doctype.cadence.cadence.archive_sequences": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.cadence.cadence.toggle_cadence_mccs": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.cadence.cadence._disable_cadence_mccs": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.apollo_account.apollo_account.provision_sequence": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.crm_lead.crm_lead._create_a_contact": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.crm_lead.crm_lead.create_a_contact": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.crm_lead.crm_lead.update_a_contact": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._assign_contact_to_sequence": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.update_sequence_contact_status": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._stop_contact_in_sequence": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
+	"frappe_apollo.apollo.doctype.communication.communication.update_a_contact": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
 		"timeout": 300

@@ -93,7 +93,7 @@ def _create_a_contact(mcc_name):
 			# Enqueue creation in Apollo
 			frappe.enqueue(
 				method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.create_a_contact",
-				queue="short",
+				queue="low",
 				lead_name=lead_name,
 				account_name=account_name
 			)
@@ -107,7 +107,7 @@ def _create_a_contact(mcc_name):
 			# Enqueue update
 			frappe.enqueue(
 				method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.update_a_contact",
-				queue="short",
+				queue="low",
 				lead_name=lead_name,
 				account_name=account_name
 			)

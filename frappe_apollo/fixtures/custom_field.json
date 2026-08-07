@@ -455,6 +455,8 @@
   "translatable": 0,
   "unique": 0,
   "width": null,
+  "doctype": "Custom Field",
+  "module": "Apollo",
   "dt": "Multi Channel Cadence",
   "fieldname": "apollo_sequence_id",
   "fieldtype": "Data",
@@ -462,6 +464,19 @@
   "name": "Multi Channel Cadence-apollo_sequence_id",
   "insert_after": "apollo_account",
   "hidden": 1
+ },
+ {
+  "width": null,
+  "doctype": "Custom Field",
+  "module": "Apollo",
+  "dt": "Multi Channel Cadence",
+  "fieldname": "apollo_contact_id",
+  "fieldtype": "Data",
+  "label": "Apollo Contact ID",
+  "name": "Multi Channel Cadence-apollo_contact_id",
+  "insert_after": "apollo_sequence_id",
+  "hidden": 1,
+  "read_only": 1
  },
  {
   "alignment": null,
