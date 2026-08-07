@@ -1,8 +1,5 @@
 ## Features
 
-* **Rate Limit and Deduplication for Sequence Updates**
-  - Added background job rate limiting for `update_sequence_steps` to prevent API thrashing.
-  - Deduplicated cadence updates by account to optimize background processing.
-  - Refactored sequence update logic into dedicated helper functions and simplified field provisioning by delegating directly to `update_sequence_steps`.
-  - Expanded unit test coverage for the updated sequence logic.
-  - Commits: [a595942](https://github.com/aurumorinc/frappe-apollo/commit/a595942a), [b60e048](https://github.com/aurumorinc/frappe-apollo/commit/b60e0486), [fb13734b](https://github.com/aurumorinc/frappe-apollo/commit/fb13734b)
+* **Automatic Email Account Name Population**
+  * When creating new Email Account documents, the `email_account_name` field is now automatically set to the `email_id` value to ensure consistent data population and prevent name collisions. Comprehensive test coverage has been added for this behavior.
+  * Commits: [`67406a2` Thái Duy](https://github.com/aurumorinc/frappe-apollo/commit/67406a27), [`058a649` Thái Duy](https://github.com/aurumorinc/frappe-apollo/commit/058a649f)
