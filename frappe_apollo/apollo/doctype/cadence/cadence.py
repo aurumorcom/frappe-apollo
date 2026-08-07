@@ -58,6 +58,16 @@ def _validate_for_sequence(doc, account_name):
 	client = ApolloClient(account_name)
 	try:
 		sequence_info = client.get_sequence(apollo_sequence_id)
+		if isinstance(sequence_info, dict) and not sequence_info.get("emailer_campaign") and "emailer_steps" in sequence_info and not sequence_info.get("emailer_steps"):
+			frappe.msgprint(
+				f"Apollo Sequence ID {apollo_sequence_id} not found in Apollo Account {account_name}. Disabling cadence.",
+				alert=True
+			)
+			doc.enabled = 0
+			if hasattr(doc, "db_set"):
+				doc.db_set("enabled", 0)
+			return
+
 		emailer_steps = (
 			sequence_info.get("emailer_steps", [])
 			if isinstance(sequence_info, dict) and "emailer_steps" in sequence_info

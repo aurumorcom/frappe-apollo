@@ -87,7 +87,7 @@ class TestMultiChannelCadence(UnitTestCase):
 
 		_stop_contact_in_sequence("mcc1", mode="stop")
 
-		mock_client.update_contact_status_sequence.assert_called_once_with(
+		mock_client.update_sequence_contact_status.assert_called_once_with(
 			"contact_123", "seq1", "stop"
 		)
 

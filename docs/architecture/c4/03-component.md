@@ -95,7 +95,7 @@ erDiagram
   - [`update_contact()`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:56)
   - [`add_contacts_to_sequence()`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:60)
   - [`create_custom_field()`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:75)
-  - [`update_contact_status_sequence()`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:83)
+  - [`update_sequence_contact_status()`](apps/frappe_apollo/frappe_apollo/integrations/apollo.py:83)
 
 ### 3. HTTP Endpoints
 
