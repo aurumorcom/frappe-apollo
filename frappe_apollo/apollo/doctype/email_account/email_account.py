@@ -77,6 +77,7 @@ def get_email_accounts(account_name):
             else:
                 doc = frappe.get_doc({
                     "doctype": "Email Account",
+                    "email_account_name": email_id,
                     "email_id": email_id,
                     "service": "Apollo",
                     "enable_outgoing": 0,

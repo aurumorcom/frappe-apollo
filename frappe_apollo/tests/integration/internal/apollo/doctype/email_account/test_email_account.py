@@ -136,6 +136,8 @@ class TestEmailAccountIntegration(IntegrationTestCase):
 
         mb_doc = frappe.get_doc("Email Account", mailboxes[0].name)
         self.assertEqual(mb_doc.email_id, self.email1)
+        self.assertEqual(mb_doc.email_account_name, self.email1)
+        self.assertEqual(mb_doc.name, self.email1)
         self.assertEqual(mb_doc.service, "Apollo")
         self.assertEqual(len(mb_doc.get("apollo_ids")), 1)
         self.assertEqual(mb_doc.apollo_ids[0].account, self.acc1)
@@ -180,3 +182,33 @@ class TestEmailAccountIntegration(IntegrationTestCase):
         accounts = [acc.account for acc in mb_doc.get("apollo_ids")]
         self.assertIn(self.acc1, accounts)
         self.assertIn(self.acc2, accounts)
+
+    @patch("frappe_apollo.integrations.apollo.ApolloClient")
+    def test_get_email_accounts_prevents_name_collision(self, mock_client_cls):
+        # Pre-create an Email Account whose title-cased prefix matches "Aryan Singh"
+        if not frappe.db.exists("Email Account", "Aryan Singh"):
+            frappe.get_doc({
+                "doctype": "Email Account",
+                "email_account_name": "Aryan Singh",
+                "email_id": "aryan.singh@otherdomain.com",
+                "service": "Apollo"
+            }).insert(ignore_permissions=True)
+
+        collision_email = "aryan.singh@newdomain.com"
+        mock_client = mock_client_cls.return_value
+        mock_client.get_email_accounts.return_value = {
+            "email_accounts": [
+                {
+                    "id": "mailbox_collision_id",
+                    "email": collision_email,
+                    "active": True
+                }
+            ]
+        }
+
+        # Creating mailbox for collision_email should name it collision_email, avoiding IntegrityError
+        get_email_accounts(self.acc1)
+
+        doc = frappe.get_doc("Email Account", collision_email)
+        self.assertEqual(doc.email_id, collision_email)
+        self.assertEqual(doc.email_account_name, collision_email)
