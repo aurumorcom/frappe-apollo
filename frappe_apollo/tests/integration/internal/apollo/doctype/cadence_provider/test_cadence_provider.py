@@ -43,26 +43,22 @@ class TestCadenceProvider(IntegrationTestCase):
         frappe.db.rollback()
         super().tearDown()
 
+    @patch("frappe.get_all")
+    @patch("frappe_apollo.apollo.doctype.cadence.cadence.update_sequence_steps")
     @patch("frappe.get_doc")
     @patch("frappe.db.get_value")
-    @patch("frappe_controller.utils.controller.wait_for_event")
-    def test_field_provisioning_listens_to_provider_enablement_event(self, mock_wait, mock_get_value, mock_get_doc):
-        mock_get_value.side_effect = lambda dt, name_or_filters=None, fieldname=None, *args, **kwargs: (
-            0 if dt == "Cadence Provider" else "Authorized"
-        )
-        mock_wait.side_effect = SuspendJob("wait")
+    def test_field_provisioning_listens_to_provider_enablement_event(
+        self, mock_get_value, mock_get_doc, mock_update_seq, mock_get_all
+    ):
+        mock_get_all.return_value = ["Cadence1"]
         mock_field_doc = MagicMock()
         mock_field_doc.label = "subject_1"
         mock_field_doc.field_type = "string"
         mock_get_doc.return_value = mock_field_doc
 
-        with self.assertRaises(SuspendJob):
-            provision_a_field("subject_1", "string", "TestDefectAccount")
+        provision_a_field("subject_1", "string", "TestDefectAccount")
 
-        mock_wait.assert_called()
-        event_key = mock_wait.call_args[0][0] if mock_wait.call_args[0] else mock_wait.call_args[1].get("event_key")
-        self.assertEqual(event_key, "doc:Cadence Provider:Apollo:on_update")
-        self.assertEqual(mock_wait.call_args[1].get("condition"), "argument.get('enabled') == 1")
+        mock_update_seq.assert_called_once_with("Cadence1", "TestDefectAccount")
 
     @patch("frappe.db.get_value")
     @patch("frappe_controller.utils.controller.wait_for_event")
@@ -121,11 +117,12 @@ class TestCadenceProvider(IntegrationTestCase):
         )
 
     @patch("frappe.get_all")
-    @patch("frappe_controller.utils.background_jobs.enqueue")
+    @patch("frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.enqueue")
     def test_cadence_provider_on_update_enqueues_valid_method_path(self, mock_enqueue, mock_get_all):
-        mock_get_all.return_value = ["Cadence1"]
+        mock_get_all.return_value = [{"parent": "Cadence1", "account": "Acc1"}]
         mock_provider = MagicMock()
         mock_provider.name = "Apollo"
+        mock_provider.enabled = 1
 
         cadence_provider_on_update(mock_provider)
 
@@ -133,5 +130,5 @@ class TestCadenceProvider(IntegrationTestCase):
         method_path = mock_enqueue.call_args[1].get("method") if mock_enqueue.call_args[1].get("method") else mock_enqueue.call_args[0][0]
         self.assertEqual(
             method_path,
-            "frappe_apollo.apollo.doctype.apollo_field.apollo_field.enqueue_provision_cadence_fields"
+            "frappe_apollo.apollo.doctype.cadence.cadence.update_sequence_steps"
         )

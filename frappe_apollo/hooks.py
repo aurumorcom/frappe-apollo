@@ -185,6 +185,11 @@ controller_events = {
 		"retries": 3,
 		"timeout": 300
 	},
+	"frappe_apollo.apollo.doctype.cadence.cadence.update_sequence_steps": {
+		"rate_limit_per_minute": 50,
+		"retries": 3,
+		"timeout": 300
+	},
 	"frappe_apollo.apollo.doctype.cadence.cadence.provision_sequences_fields_and_steps": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
