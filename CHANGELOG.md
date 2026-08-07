@@ -1,16 +1,8 @@
-## Breaking Changes
+## Features
 
-- **Public API Renaming**
-  Internal functions have been renamed to public API functions (`add_contact_to_sequence`, `update_sequence_contact_status`, `toggle_cadence_mccs`), and contact lookup has been simplified using `apollo_contact_id`.
-  - Migration: Update all external call sites to use the newly renamed public API function names and adapt to the simplified contact lookup using `apollo_contact_id`.
-  - Commits: [35ce458](https://github.com/aurumorinc/frappe-apollo/commit/35ce4584), [60f1195](https://github.com/aurumorinc/frappe-apollo/commit/60f11955), [3288df3](https://github.com/aurumorinc/frappe-apollo/commit/3288df3d)
-
-- **Sequence Contact Management API Renaming**
-  Public API functions for sequence contact management (`add_contact_to_sequence`, `update_sequence_contact_status`, `toggle_cadence_mccs`) have been renamed with high severity impact.
-  - Migration: Update all external call sites to use the newly renamed public API function names and adapt to the simplified contact lookup using `apollo_contact_id`.
-
-## New Features
-
-- **Background Job Configurations**
-  Added rate limiting, retry configurations, and timeouts for asynchronous background jobs, while updating queue priority from "short" to "low" for lead contact operations.
-  - Commits: [d0ea4de](https://github.com/aurumorinc/frappe-apollo/commit/d0ea4de4), [a3259a5](https://github.com/aurumorinc/frappe-apollo/commit/a3259a53)
+* **Rate Limit and Deduplication for Sequence Updates**
+  - Added background job rate limiting for `update_sequence_steps` to prevent API thrashing.
+  - Deduplicated cadence updates by account to optimize background processing.
+  - Refactored sequence update logic into dedicated helper functions and simplified field provisioning by delegating directly to `update_sequence_steps`.
+  - Expanded unit test coverage for the updated sequence logic.
+  - Commits: [a595942](https://github.com/aurumorinc/frappe-apollo/commit/a595942a), [b60e048](https://github.com/aurumorinc/frappe-apollo/commit/b60e0486), [fb13734b](https://github.com/aurumorinc/frappe-apollo/commit/fb13734b)
