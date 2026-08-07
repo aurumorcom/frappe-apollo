@@ -20,12 +20,21 @@ class ApolloClient:
 		return self._request("GET", endpoint)
 
 	def get_sequence(self, sequence_id):
-		try:
-			return self._request("GET", f"/sequences/{sequence_id}")
-		except requests.exceptions.HTTPError as e:
-			if e.response is not None and e.response.status_code in (404, 405):
-				return self._request("GET", f"/emailer_campaigns/{sequence_id}")
-			raise
+		page = 1
+		total_pages = 1
+		while page <= total_pages:
+			res = self.search_sequences(page=page, per_page=100)
+			if isinstance(res, dict) and "emailer_campaigns" in res:
+				pagination = res.get("pagination") or {}
+				total_pages = pagination.get("total_pages") or 1
+				for campaign in res.get("emailer_campaigns") or []:
+					if campaign.get("id") == sequence_id:
+						return {
+							"emailer_campaign": campaign,
+							"emailer_steps": campaign.get("emailer_steps") or []
+						}
+			page += 1
+		return {"emailer_campaign": {}, "emailer_steps": []}
 
 	def create_sequence(self, name, permissions="team_can_use", active=True, emailer_steps=None):
 		payload = {
