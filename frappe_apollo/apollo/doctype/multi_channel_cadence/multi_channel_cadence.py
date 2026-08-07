@@ -63,44 +63,46 @@ def before_save(doc, method=None):
 		doc.apollo_account = selected_mapping.account
 		doc.apollo_sequence_id = frappe.db.get_value("Apollo Account", selected_mapping.account, "apollo_sequence_id")
 
+def _is_contact_in_sequence(doc):
+	return bool(getattr(doc, "apollo_contact_id", None) or (isinstance(doc, dict) and doc.get("apollo_contact_id")))
+
+
 def on_update(doc, method=None):
-	if doc.get_doc_before_save() and doc.get_doc_before_save().status == "Draft" and doc.status == "Scheduled":
+	before_doc = doc.get_doc_before_save()
+	before_status = before_doc.status if before_doc else None
+
+	if before_status == "Draft" and doc.status == "Scheduled":
 		frappe.enqueue(
-			method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_a_contact_to_sequence",
-			queue="short",
+			method="frappe_apollo.apollo.doctype.crm_lead.crm_lead._create_a_contact",
+			queue="low",
+			mcc_name=doc.name
+		)
+		frappe.enqueue(
+			method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
+			queue="high",
 			mcc_name=doc.name
 		)
 
-	deactivation_statuses = ["Disabled", "Stopped", "Completed", "Cancelled"]
-	before_status = doc.get_doc_before_save().status if doc.get_doc_before_save() else None
-	if doc.status in deactivation_statuses and before_status != doc.status:
-		mode_map = {
-			"Disabled": "stop",
-			"Stopped": "stop",
-			"Completed": "mark_as_finished",
-			"Cancelled": "remove"
-		}
-		mode = mode_map.get(doc.status, "stop")
-		frappe.enqueue(
-			method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._stop_contact_in_sequence",
-			queue="short",
-			mcc_name=doc.name,
-			mode=mode
-		)
+	went_to_disabled = doc.status == "Disabled" and before_status != "Disabled"
+	came_from_disabled = before_status == "Disabled" and doc.status in ["Scheduled", "In Progress"]
 
-def add_a_contact_to_sequence(mcc_name):
-	frappe.enqueue(
-		method="frappe_apollo.apollo.doctype.crm_lead.crm_lead._create_a_contact",
-		queue="short",
-		mcc_name=mcc_name
-	)
-	frappe.enqueue(
-		method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._assign_contact_to_sequence",
-		queue="short",
-		mcc_name=mcc_name
-	)
+	if (went_to_disabled or came_from_disabled) and _is_contact_in_sequence(doc):
+		if went_to_disabled:
+			frappe.enqueue(
+				method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.update_sequence_contact_status",
+				queue="medium",
+				mcc_name=doc.name,
+				mode="stop"
+			)
+		elif came_from_disabled:
+			frappe.enqueue(
+				method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
+				queue="high",
+				mcc_name=doc.name
+			)
 
-def _assign_contact_to_sequence(mcc_name):
+
+def add_contact_to_sequence(mcc_name):
 	from frappe_apollo.integrations.apollo import ApolloClient
 
 	mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
@@ -190,32 +192,31 @@ def _assign_contact_to_sequence(mcc_name):
 	client = ApolloClient(account_name)
 	try:
 		client.add_contacts_to_sequence(contact_apollo_id, mcc.apollo_sequence_id, apollo_mailbox_id)
+		mcc.db_set("apollo_contact_id", contact_apollo_id)
 	except Exception as e:
 		frappe.log_error(title="Failed to assign sequence in Apollo", message=str(e))
 		raise
 
-def _stop_contact_in_sequence(mcc_name, mode="stop"):
+
+def update_sequence_contact_status(mcc_name, mode="stop"):
 	from frappe_apollo.integrations.apollo import ApolloClient
 
 	mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
+	if not _is_contact_in_sequence(mcc):
+		return
+
 	if not mcc.apollo_account or not mcc.apollo_sequence_id:
 		return
 
 	account_name = mcc.apollo_account
 	sequence_id = mcc.apollo_sequence_id
-
-	crm_lead_accounts = frappe.get_all(
-		"CRM Lead Apollo ID",
-		filters={"parent": mcc.recipient, "account": account_name},
-		fields=["apollo_id"]
-	)
-	if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
-		return
-
-	contact_apollo_id = crm_lead_accounts[0].apollo_id
+	contact_apollo_id = mcc.apollo_contact_id
 
 	client = ApolloClient(account_name)
 	try:
 		client.update_sequence_contact_status(contact_apollo_id, sequence_id, mode)
 	except Exception as e:
-		frappe.log_error(title="Failed to stop contact in Apollo sequence", message=str(e))
+		frappe.log_error(title="Failed to update contact status in Apollo sequence", message=str(e))
+
+
+_stop_contact_in_sequence = update_sequence_contact_status
