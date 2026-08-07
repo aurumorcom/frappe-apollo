@@ -40,8 +40,8 @@ flowchart TD
     EnqueueUpdateContact --> CallUpdateContactAPI["ApolloClient update_contact()"]
     CallUpdateContactAPI --> ContactCreatedReady(["Lead Contact Ready in Apollo"])
     
-    %% Sequence Assignment Subflow (_assign_contact_to_sequence)
-    EnqueueAddContact --> AssignSequence["Multi Channel Cadence _assign_contact_to_sequence()"]
+    %% Sequence Assignment Subflow (add_contact_to_sequence)
+    EnqueueAddContact --> AssignSequence["Multi Channel Cadence add_contact_to_sequence()"]
     AssignSequence --> CheckMCCSeqAccount{"MCC Account Authorized & Sequence ID Set?"}
     CheckMCCSeqAccount -- No --> WaitMCCSeq["wait_for_event('Apollo Account on_update')"]
     WaitMCCSeq -. Event Trigger .-> CheckMCCSeqAccount

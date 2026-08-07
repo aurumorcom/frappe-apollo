@@ -520,7 +520,7 @@ frappe_apollo/apollo/doctype/multi_channel_cadence/multi_channel_cadence.py:
 ⋮
 │def add_a_contact_to_sequence(mcc_name):
 ⋮
-│def _assign_contact_to_sequence(mcc_name):
+│def add_contact_to_sequence(mcc_name):
 ⋮
 │def _stop_contact_in_sequence(mcc_name, mode="stop"):
 ⋮
