@@ -1,5 +1,5 @@
-## Features
+## Infrastructure
 
-* **Automatic Email Account Name Population**
-  * When creating new Email Account documents, the `email_account_name` field is now automatically set to the `email_id` value to ensure consistent data population and prevent name collisions. Comprehensive test coverage has been added for this behavior.
-  * Commits: [`67406a2` Thái Duy](https://github.com/aurumorinc/frappe-apollo/commit/67406a27), [`058a649` Thái Duy](https://github.com/aurumorinc/frappe-apollo/commit/058a649f)
+* **Release Workflow Permissions (`effa335`)**: Added explicit `contents: write` permission to the release workflow job to ensure the runner can successfully create releases and update repository contents.
+* **Release Workflow Permissions (`b2ce8b5`)**: Configured necessary repository permissions within the release pipeline configuration.
+* **Release Workflow Permissions (`83f3718`)**: Updated workflow authorization scopes to support automated release generation and asset publishing.
