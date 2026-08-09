@@ -20,7 +20,6 @@ def callback(code, state=None):
 
 	account = frappe.get_doc("Apollo Account", account_name)
 
-
 	raw_uri = frappe.utils.get_url("/api/method/frappe_apollo.oauth.callback")
 	parsed = urlparse(raw_uri)
 	redirect_uri = urlunparse(parsed._replace(netloc=parsed.hostname))
@@ -31,7 +30,7 @@ def callback(code, state=None):
 		"code": code,
 		"client_id": account.client_id,
 		"client_secret": account.get_password("client_secret"),
-		"redirect_uri": redirect_uri
+		"redirect_uri": redirect_uri,
 	}
 
 	response = requests.post(url, data=payload)
