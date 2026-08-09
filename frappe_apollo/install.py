@@ -10,26 +10,31 @@ def after_install() -> None:
 		return
 
 	if not frappe.db.exists("Cadence Provider", "Apollo"):
-		doc = frappe.get_doc({
-			"doctype": "Cadence Provider",
-			"provider_name": "Apollo",
-			"enabled": 1,
-			"channels": [
-				{
-					"channel": "Email",
-					"priority": 1,
-				}
-			],
-		})
+		doc = frappe.get_doc(
+			{
+				"doctype": "Cadence Provider",
+				"provider_name": "Apollo",
+				"enabled": 1,
+				"channels": [
+					{
+						"channel": "Email",
+						"priority": 1,
+					}
+				],
+			}
+		)
 		doc.insert(ignore_permissions=True)
 	else:
 		doc = frappe.get_doc("Cadence Provider", "Apollo")
 		email_channel_exists = any(row.channel == "Email" for row in getattr(doc, "channels", []))
 		if not email_channel_exists:
-			doc.append("channels", {
-				"channel": "Email",
-				"priority": 1,
-			})
+			doc.append(
+				"channels",
+				{
+					"channel": "Email",
+					"priority": 1,
+				},
+			)
 			doc.save(ignore_permissions=True)
 
 	frappe.db.commit()

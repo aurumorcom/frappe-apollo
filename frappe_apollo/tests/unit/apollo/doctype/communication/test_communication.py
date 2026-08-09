@@ -8,7 +8,6 @@ from frappe_apollo.apollo.doctype.communication.communication import on_update, 
 
 
 class TestCommunicationOverride(UnitTestCase):
-
 	@patch("frappe.enqueue")
 	def test_on_update_enqueues_when_status_changes_to_scheduled(self, mock_enqueue):
 		mock_doc = MagicMock()
@@ -23,7 +22,7 @@ class TestCommunicationOverride(UnitTestCase):
 		mock_enqueue.assert_called_once_with(
 			method="frappe_apollo.apollo.doctype.communication.communication.update_a_contact",
 			queue="medium",
-			comm_name="Comm-1"
+			comm_name="Comm-1",
 		)
 
 	@patch("frappe.get_doc")
@@ -53,7 +52,7 @@ class TestCommunicationOverride(UnitTestCase):
 
 		mock_wait.assert_called_once_with(
 			event_key=f"doc:Multi Channel Cadence:{mock_mcc.name}:on_update",
-			condition="argument.get('apollo_account') and argument.get('apollo_sequence_id')"
+			condition="argument.get('apollo_account') and argument.get('apollo_sequence_id')",
 		)
 
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")
@@ -101,19 +100,20 @@ class TestCommunicationOverride(UnitTestCase):
 			mock_provider,
 			mock_cadence,
 			mock_subject_field,
-			mock_response_field
+			mock_response_field,
 		]
 
 		mock_get_value.side_effect = lambda dt, *args: 1 if dt == "Cadence Provider" else None
-		mock_get_all.side_effect = lambda dt, *args, **kwargs: [MagicMock(apollo_id="apollo-person-1")] if dt == "CRM Lead Apollo ID" else []
+		mock_get_all.side_effect = lambda dt, *args, **kwargs: (
+			[MagicMock(apollo_id="apollo-person-1")] if dt == "CRM Lead Apollo ID" else []
+		)
 
 		mock_client = mock_client_cls.return_value
 
 		update_a_contact("Comm-1")
 
 		mock_client.update_contact.assert_called_once_with(
-			"apollo-person-1",
-			{"apollo-subject-1": "subject line 1", "apollo-body-1": "content body 1"}
+			"apollo-person-1", {"apollo-subject-1": "subject line 1", "apollo-body-1": "content body 1"}
 		)
 
 	@patch("frappe.get_all")
@@ -124,7 +124,13 @@ class TestCommunicationOverride(UnitTestCase):
 		mock_comm.get.return_value = None
 		mock_comm.cadence_schedule = "Sch-5"
 
-		mock_mcc = MagicMock(sender="user@example.com", cadence_name="Cad-1", recipient="Lead-1", apollo_account="Acc-1", apollo_sequence_id="Seq-1")
+		mock_mcc = MagicMock(
+			sender="user@example.com",
+			cadence_name="Cad-1",
+			recipient="Lead-1",
+			apollo_account="Acc-1",
+			apollo_sequence_id="Seq-1",
+		)
 		mock_account = MagicMock(status="Authorized")
 
 		mock_provider = MagicMock()
@@ -139,15 +145,11 @@ class TestCommunicationOverride(UnitTestCase):
 			schedules.append(m)
 		mock_cadence.get.side_effect = lambda k, d=[]: schedules if k == "cadence_schedules" else d
 
-		mock_get_doc.side_effect = [
-			mock_comm,
-			mock_mcc,
-			mock_account,
-			mock_provider,
-			mock_cadence
-		]
+		mock_get_doc.side_effect = [mock_comm, mock_mcc, mock_account, mock_provider, mock_cadence]
 		mock_get_value.side_effect = lambda dt, *args: 1 if dt == "Cadence Provider" else None
-		mock_get_all.side_effect = lambda dt, *args, **kwargs: [MagicMock(apollo_id="p-1")] if dt == "CRM Lead Apollo ID" else []
+		mock_get_all.side_effect = lambda dt, *args, **kwargs: (
+			[MagicMock(apollo_id="p-1")] if dt == "CRM Lead Apollo ID" else []
+		)
 
 		with self.assertRaises(SuspendJob) as ctx:
 			update_a_contact("Comm-1")

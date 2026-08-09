@@ -117,7 +117,9 @@ class TestApolloAccount(UnitTestCase):
 	@patch("frappe.log_error")
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")
 	@patch("frappe.db.get_value")
-	def test_provision_sequence_handles_403_forbidden(self, mock_db_get_value, mock_client_cls, mock_log_error):
+	def test_provision_sequence_handles_403_forbidden(
+		self, mock_db_get_value, mock_client_cls, mock_log_error
+	):
 		import requests
 
 		def db_get_value_side_effect(dt, name, field=None):
@@ -140,4 +142,3 @@ class TestApolloAccount(UnitTestCase):
 		provision_sequence("Acc1")
 
 		mock_log_error.assert_called_once()
-

@@ -5,7 +5,6 @@ from frappe_apollo.install import after_install
 
 
 class TestInstallIntegration(IntegrationTestCase):
-
 	def setUp(self):
 		super().setUp()
 		if frappe.db.exists("Cadence Provider", "Apollo"):
@@ -32,3 +31,30 @@ class TestInstallIntegration(IntegrationTestCase):
 		self.assertEqual(doc.enabled, 1)
 		channels = [row.channel for row in doc.channels]
 		self.assertIn("Email", channels)
+
+	def test_custom_fields_and_tabs(self):
+		crm_meta = frappe.get_meta("CRM Lead")
+		crm_field = crm_meta.get_field("apollo_ids")
+		if crm_field:
+			self.assertEqual(crm_field.hidden, 0)
+			self.assertEqual(crm_field.insert_after, "integrations_tab")
+
+		email_meta = frappe.get_meta("Email Account")
+		email_tab = email_meta.get_field("integrations_tab")
+		email_field = email_meta.get_field("apollo_ids")
+		if email_tab and email_field:
+			self.assertEqual(email_field.hidden, 0)
+			self.assertEqual(email_field.insert_after, "integrations_tab")
+
+		cadence_meta = frappe.get_meta("Cadence")
+		cadence_tab = cadence_meta.get_field("integrations_tab")
+		cadence_field = cadence_meta.get_field("apollo_ids")
+		if cadence_tab and cadence_field:
+			self.assertEqual(cadence_field.hidden, 0)
+			self.assertEqual(cadence_field.insert_after, "integrations_tab")
+
+		apollo_field_meta = frappe.get_meta("Apollo Field")
+		apollo_field_tab = apollo_field_meta.get_field("integrations_tab")
+		apollo_field_ids = apollo_field_meta.get_field("apollo_ids")
+		if apollo_field_tab and apollo_field_ids:
+			self.assertEqual(apollo_field_tab.fieldtype, "Tab Break")

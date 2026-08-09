@@ -6,7 +6,6 @@ from frappe_apollo.uninstall import before_uninstall
 
 
 class TestUninstallIntegration(IntegrationTestCase):
-
 	def setUp(self):
 		super().setUp()
 		after_install()

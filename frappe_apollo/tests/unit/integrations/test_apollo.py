@@ -8,11 +8,12 @@ from frappe_apollo.integrations.apollo import ApolloClient, ApolloRateLimitError
 
 
 class TestApolloClient(UnitTestCase):
-
 	@patch("frappe.get_doc")
 	def test_get_headers_api_key(self, mock_get_doc):
 		mock_account = MagicMock()
-		mock_account.get_password.side_effect = lambda field, raise_exception=False: "test_key" if field == "api_key" else None
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: (
+			"test_key" if field == "api_key" else None
+		)
 		mock_account.access_token = None
 		mock_account.refresh_token = None
 		mock_get_doc.return_value = mock_account
@@ -26,7 +27,9 @@ class TestApolloClient(UnitTestCase):
 	@patch("frappe.get_doc")
 	def test_get_headers_oauth(self, mock_get_doc):
 		mock_account = MagicMock()
-		mock_account.get_password.side_effect = lambda field, raise_exception=False: "actual_token_value" if field == "access_token" else None
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: (
+			"actual_token_value" if field == "access_token" else None
+		)
 		mock_account.access_token = "some_token"
 		mock_get_doc.return_value = mock_account
 
@@ -40,7 +43,9 @@ class TestApolloClient(UnitTestCase):
 	@patch("frappe_apollo.integrations.apollo.requests.request")
 	def test_rate_limit_error(self, mock_request, mock_get_doc):
 		mock_account = MagicMock()
-		mock_account.get_password.side_effect = lambda field, raise_exception=False: "key" if field == "api_key" else None
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: (
+			"key" if field == "api_key" else None
+		)
 		mock_account.refresh_token = None
 		mock_account.get.return_value = None
 		mock_get_doc.return_value = mock_account
@@ -115,7 +120,9 @@ class TestApolloClient(UnitTestCase):
 	@patch("frappe.db.commit")
 	@patch("frappe.get_doc")
 	@patch("frappe_apollo.integrations.apollo.requests.post")
-	def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit, mock_log_error):
+	def test_refresh_oauth_token_failure_marks_unauthorized(
+		self, mock_post, mock_get_doc, mock_commit, mock_log_error
+	):
 		mock_account = MagicMock()
 		mock_account.get_password.return_value = "token"
 		mock_get_doc.return_value = mock_account
@@ -155,7 +162,9 @@ class TestApolloClient(UnitTestCase):
 
 		self.assertIn("email_accounts", res)
 		self.assertEqual(len(res["email_accounts"]), 1)
-		mock_request.assert_called_once_with("GET", "https://api.apollo.io/api/v1/email_accounts", headers=client._get_headers())
+		mock_request.assert_called_once_with(
+			"GET", "https://api.apollo.io/api/v1/email_accounts", headers=client._get_headers()
+		)
 
 	@patch("frappe.get_doc")
 	def test_get_sequence_success(self, mock_get_doc):
@@ -165,10 +174,7 @@ class TestApolloClient(UnitTestCase):
 		client = ApolloClient("Test Account")
 		target_seq = {"id": "seq_123", "name": "Target", "emailer_steps": [{"id": "step_1"}]}
 		with patch.object(client, "search_sequences") as mock_search:
-			mock_search.return_value = {
-				"pagination": {"total_pages": 1},
-				"emailer_campaigns": [target_seq]
-			}
+			mock_search.return_value = {"pagination": {"total_pages": 1}, "emailer_campaigns": [target_seq]}
 			res = client.get_sequence("seq_123")
 
 			self.assertEqual(res["emailer_campaign"], target_seq)
@@ -184,7 +190,7 @@ class TestApolloClient(UnitTestCase):
 		with patch.object(client, "search_sequences") as mock_search:
 			mock_search.return_value = {
 				"pagination": {"total_pages": 1},
-				"emailer_campaigns": [{"id": "seq_other", "name": "Other"}]
+				"emailer_campaigns": [{"id": "seq_other", "name": "Other"}],
 			}
 			res = client.get_sequence("seq_missing")
 

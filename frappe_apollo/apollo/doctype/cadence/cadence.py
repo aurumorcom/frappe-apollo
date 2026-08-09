@@ -162,7 +162,12 @@ def _create_fields(client, cadence_doc, account_name):
 							)
 							field_doc.save(ignore_permissions=True)
 					except Exception as e:
-						if hasattr(e, "response") and getattr(e.response, "status_code", None) in (400, 422, 401, 403):
+						if hasattr(e, "response") and getattr(e.response, "status_code", None) in (
+							400,
+							422,
+							401,
+							403,
+						):
 							frappe.log_error(title="Apollo Field Creation Skipped", message=str(e))
 						else:
 							frappe.log_error(title="Apollo Field Creation Failed", message=str(e))
@@ -211,7 +216,7 @@ def _update_sequence(client, sequence_id, cadence_doc):
 		wait_mode = "second" if wait_time == 0 else "day"
 
 		ref_dt = getattr(sch, "reference_doctype", None) or sch.get("reference_doctype")
-		is_email = (ref_dt == "Email Template")
+		is_email = ref_dt == "Email Template"
 
 		subj = (
 			f"{{{{custom_field_subject_{step_num}}}}}"
@@ -250,7 +255,7 @@ def _update_sequence(client, sequence_id, cadence_doc):
 def _validate_for_sequence(doc, account_name):
 	supported_channels = _get_supported_channels()
 	required_steps = 0
-	for sch in (doc.get("cadence_schedules") or []):
+	for sch in doc.get("cadence_schedules") or []:
 		channel = getattr(sch, "channel", None) or sch.get("channel")
 		ref_dt = getattr(sch, "reference_doctype", None) or sch.get("reference_doctype")
 		if channel in supported_channels or ref_dt == "Email Template" or channel == "Email":
@@ -263,7 +268,7 @@ def _validate_for_sequence(doc, account_name):
 	if not apollo_sequence_id:
 		frappe.msgprint(
 			f"Apollo Account {account_name} does not have a configured Apollo Sequence ID. Disabling cadence.",
-			alert=True
+			alert=True,
 		)
 		doc.enabled = 0
 		if hasattr(doc, "db_set"):
@@ -273,10 +278,15 @@ def _validate_for_sequence(doc, account_name):
 	client = ApolloClient(account_name)
 	try:
 		sequence_info = client.get_sequence(apollo_sequence_id)
-		if isinstance(sequence_info, dict) and not sequence_info.get("emailer_campaign") and "emailer_steps" in sequence_info and not sequence_info.get("emailer_steps"):
+		if (
+			isinstance(sequence_info, dict)
+			and not sequence_info.get("emailer_campaign")
+			and "emailer_steps" in sequence_info
+			and not sequence_info.get("emailer_steps")
+		):
 			frappe.msgprint(
 				f"Apollo Sequence ID {apollo_sequence_id} not found in Apollo Account {account_name}. Disabling cadence.",
-				alert=True
+				alert=True,
 			)
 			doc.enabled = 0
 			if hasattr(doc, "db_set"):
@@ -286,13 +296,17 @@ def _validate_for_sequence(doc, account_name):
 		emailer_steps = (
 			sequence_info.get("emailer_steps", [])
 			if isinstance(sequence_info, dict) and "emailer_steps" in sequence_info
-			else (sequence_info.get("sequence", {}).get("emailer_steps", []) if isinstance(sequence_info, dict) else [])
+			else (
+				sequence_info.get("sequence", {}).get("emailer_steps", [])
+				if isinstance(sequence_info, dict)
+				else []
+			)
 		)
 		current_steps = len(emailer_steps)
 	except Exception as e:
 		frappe.msgprint(
 			f"Failed to fetch sequence details for Apollo Account {account_name}: {e!s}. Disabling cadence.",
-			alert=True
+			alert=True,
 		)
 		doc.enabled = 0
 		if hasattr(doc, "db_set"):
@@ -302,7 +316,7 @@ def _validate_for_sequence(doc, account_name):
 	if required_steps > current_steps:
 		frappe.msgprint(
 			f"Cadence required steps ({required_steps}) exceed Apollo sequence capacity ({current_steps}). Disabling cadence.",
-			alert=True
+			alert=True,
 		)
 		doc.enabled = 0
 		if hasattr(doc, "db_set"):
@@ -317,9 +331,9 @@ def toggle_cadence_mccs(cadence_name):
 			"Multi Channel Cadence",
 			filters={
 				"cadence_name": cadence_name,
-				"status": ["in", ["Scheduled", "In Progress", "Active", "Draft"]]
+				"status": ["in", ["Scheduled", "In Progress", "Active", "Draft"]],
 			},
-			fields=["name"]
+			fields=["name"],
 		)
 		for mcc in active_mccs:
 			mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)
@@ -332,11 +346,8 @@ def toggle_cadence_mccs(cadence_name):
 	else:
 		disabled_mccs = frappe.get_all(
 			"Multi Channel Cadence",
-			filters={
-				"cadence_name": cadence_name,
-				"status": "Disabled"
-			},
-			fields=["name"]
+			filters={"cadence_name": cadence_name, "status": "Disabled"},
+			fields=["name"],
 		)
 		for mcc in disabled_mccs:
 			mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)
