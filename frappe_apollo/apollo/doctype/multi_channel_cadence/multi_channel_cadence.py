@@ -174,16 +174,22 @@ def add_contact_to_sequence(mcc_name):
 	if not apollo_mailbox_id:
 		raise Exception(f"No Apollo Mailbox mapped for account {account_name}.")
 
-	crm_lead_accounts = frappe.get_all("CRM Lead Apollo ID", filters={"parent": mcc.recipient, "account": account_name}, fields=["apollo_id"])
+	crm_lead_accounts = frappe.get_all(
+		"CRM Lead Apollo ID", filters={"parent": mcc.recipient, "account": account_name}, fields=["apollo_id"]
+	)
 	if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
 		wait_for_event(
 			event_key=f"doc:CRM Lead:on_update:{mcc.recipient}",
-			condition=f"any(row.get('account') == '{account_name}' and row.get('apollo_id') for row in argument.get('apollo_ids', []))"
+			condition=f"[row for row in argument.get('apollo_ids', []) if row.get('account') == {json.dumps(account_name)} and row.get('apollo_id')]",
 		)
 		mcc.reload()
 		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
 			return
-		crm_lead_accounts = frappe.get_all("CRM Lead Apollo ID", filters={"parent": mcc.recipient, "account": account_name}, fields=["apollo_id"])
+		crm_lead_accounts = frappe.get_all(
+			"CRM Lead Apollo ID",
+			filters={"parent": mcc.recipient, "account": account_name},
+			fields=["apollo_id"],
+		)
 		if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
 			return
 

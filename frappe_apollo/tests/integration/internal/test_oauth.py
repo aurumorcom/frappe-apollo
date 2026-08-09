@@ -36,15 +36,13 @@ class TestOAuth(IntegrationTestCase):
 	def test_oauth_callback(self, mock_post):
 		mock_response = MagicMock()
 		mock_response.status_code = 200
-		mock_response.json.return_value = {
-			"access_token": "new_access",
-			"refresh_token": "new_refresh"
-		}
+		mock_response.json.return_value = {"access_token": "new_access", "refresh_token": "new_refresh"}
 		mock_post.return_value = mock_response
 
 		frappe.local.response = {}
 
 		from frappe_apollo.oauth import callback
+
 		callback("auth_code_123", "Test Account OAuth")
 
 		account = frappe.get_doc("Apollo Account", "Test Account OAuth")

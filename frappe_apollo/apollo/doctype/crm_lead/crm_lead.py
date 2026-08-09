@@ -193,7 +193,7 @@ def update_a_contact(lead_name, account_name):
 			"first_name": lead.first_name,
 			"last_name": lead.last_name,
 			"email": lead.email,
-			"organization_name": lead.organization
+			"organization_name": lead.organization,
 		}
 		client.update_contact(current_row.apollo_id, lead_data)
 	except Exception as e:

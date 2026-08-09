@@ -332,11 +332,8 @@ def toggle_cadence_mccs(cadence_name):
 	else:
 		disabled_mccs = frappe.get_all(
 			"Multi Channel Cadence",
-			filters={
-				"cadence_name": cadence_name,
-				"status": "Disabled"
-			},
-			fields=["name"]
+			filters={"cadence_name": cadence_name, "status": "Disabled"},
+			fields=["name"],
 		)
 		for mcc in disabled_mccs:
 			mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)

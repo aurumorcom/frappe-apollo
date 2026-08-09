@@ -6,7 +6,6 @@ from frappe_apollo.install import after_install
 
 
 class TestInstall(UnitTestCase):
-
 	@patch("frappe_apollo.install.frappe")
 	def test_after_install_creates_apollo_provider_when_missing(self, mock_frappe):
 		def exists_side_effect(dt, name=None):
@@ -22,17 +21,19 @@ class TestInstall(UnitTestCase):
 
 		after_install()
 
-		mock_frappe.get_doc.assert_called_once_with({
-			"doctype": "Cadence Provider",
-			"provider_name": "Apollo",
-			"enabled": 1,
-			"channels": [
-				{
-					"channel": "Email",
-					"priority": 1,
-				}
-			],
-		})
+		mock_frappe.get_doc.assert_called_once_with(
+			{
+				"doctype": "Cadence Provider",
+				"provider_name": "Apollo",
+				"enabled": 1,
+				"channels": [
+					{
+						"channel": "Email",
+						"priority": 1,
+					}
+				],
+			}
+		)
 		mock_doc.insert.assert_called_once_with(ignore_permissions=True)
 		mock_frappe.db.commit.assert_called_once()
 
@@ -73,10 +74,13 @@ class TestInstall(UnitTestCase):
 
 		after_install()
 
-		mock_doc.append.assert_called_once_with("channels", {
-			"channel": "Email",
-			"priority": 1,
-		})
+		mock_doc.append.assert_called_once_with(
+			"channels",
+			{
+				"channel": "Email",
+				"priority": 1,
+			},
+		)
 		mock_doc.save.assert_called_once_with(ignore_permissions=True)
 		mock_frappe.db.commit.assert_called_once()
 

@@ -146,3 +146,44 @@ class TestMultiChannelCadence(UnitTestCase):
 		on_update(doc)
 
 		mock_enqueue.assert_not_called()
+
+	@patch("frappe.get_doc")
+	@patch("frappe.db.get_value")
+	@patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+	def test_assign_contact_waits_for_email_account_escapes_single_quotes(
+		self, mock_wait, mock_db_get_value, mock_get_doc
+	):
+		import ast
+
+		mcc = MagicMock()
+		mcc.status = "Scheduled"
+		mcc.sender = "user@example.com"
+		mcc.apollo_account = "Abhishek's Apollo"
+		mcc.apollo_sequence_id = "seq123"
+
+		email_account = MagicMock()
+		email_account.get.return_value = []
+
+		def get_doc_side_effect(doctype, name=None):
+			if doctype == "Multi Channel Cadence":
+				return mcc
+			elif doctype == "Email Account":
+				return email_account
+			return MagicMock()
+
+		mock_get_doc.side_effect = get_doc_side_effect
+		mock_db_get_value.side_effect = lambda dt, *args, **kwargs: (
+			1 if dt == "Cadence Provider" else "email_acc_1"
+		)
+		mock_wait.side_effect = SuspendJob("wait_for_mailbox")
+
+		with self.assertRaises(SuspendJob):
+			add_contact_to_sequence("mcc1")
+
+		mock_wait.assert_called()
+		call_args = mock_wait.call_args[1]
+		condition_str = call_args["condition"]
+
+		# Verify that condition_str is valid Python syntax (no SyntaxError)
+		ast.parse(condition_str)
+		self.assertIn('"Abhishek\'s Apollo"', condition_str)

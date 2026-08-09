@@ -159,7 +159,9 @@ def update_a_contact(comm_name):
 				response_apollo_id = row.apollo_id
 				break
 		if not response_apollo_id:
-			raise SuspendJob(f"Message/Body field {response_field_name} Apollo ID missing for account {account_name}.")
+			raise SuspendJob(
+				f"Message/Body field {response_field_name} Apollo ID missing for account {account_name}."
+			)
 
 	custom_fields[response_apollo_id] = comm.content
 

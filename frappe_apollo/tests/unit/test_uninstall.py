@@ -6,7 +6,6 @@ from frappe_apollo.uninstall import before_uninstall
 
 
 class TestUninstall(UnitTestCase):
-
 	@patch("frappe_apollo.uninstall.frappe")
 	def test_before_uninstall_removes_apollo_provider(self, mock_frappe):
 		def exists_side_effect(dt, name=None):
@@ -20,7 +19,9 @@ class TestUninstall(UnitTestCase):
 
 		before_uninstall()
 
-		mock_frappe.delete_doc.assert_called_once_with("Cadence Provider", "Apollo", ignore_permissions=True, force=True)
+		mock_frappe.delete_doc.assert_called_once_with(
+			"Cadence Provider", "Apollo", ignore_permissions=True, force=True
+		)
 		mock_frappe.db.commit.assert_called_once()
 
 	@patch("frappe_apollo.uninstall.frappe")

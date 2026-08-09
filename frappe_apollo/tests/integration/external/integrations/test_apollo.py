@@ -247,7 +247,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			mock_response.json.return_value = {
 				"access_token": "new_access",
 				"refresh_token": "new_refresh",
-				"expires_in": 3600
+				"expires_in": 3600,
 			}
 			mock_post.return_value = mock_response
 

@@ -176,7 +176,9 @@ class TestCadenceProvisioning(UnitTestCase):
 	@patch("frappe.msgprint")
 	@patch("frappe.db.get_value")
 	@patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
-	def test_validate_for_sequence_mismatch_disables_cadence(self, mock_client_cls, mock_db_get_value, mock_msgprint):
+	def test_validate_for_sequence_mismatch_disables_cadence(
+		self, mock_client_cls, mock_db_get_value, mock_msgprint
+	):
 		doc = MagicMock()
 		doc.name = "Test Cadence"
 

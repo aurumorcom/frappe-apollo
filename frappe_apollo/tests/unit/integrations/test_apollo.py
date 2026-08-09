@@ -184,7 +184,7 @@ class TestApolloClient(UnitTestCase):
 		with patch.object(client, "search_sequences") as mock_search:
 			mock_search.return_value = {
 				"pagination": {"total_pages": 1},
-				"emailer_campaigns": [{"id": "seq_other", "name": "Other"}]
+				"emailer_campaigns": [{"id": "seq_other", "name": "Other"}],
 			}
 			res = client.get_sequence("seq_missing")
 

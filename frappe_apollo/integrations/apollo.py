@@ -216,7 +216,9 @@ class ApolloClient:
 
 		expires_in = data.get("expires_in")
 		if expires_in:
-			self.account.expired = frappe.utils.add_to_date(frappe.utils.now_datetime(), seconds=int(expires_in))
+			self.account.expired = frappe.utils.add_to_date(
+				frappe.utils.now_datetime(), seconds=int(expires_in)
+			)
 
 		self.account.status = "Authorized"
 		self.account.save(ignore_permissions=True)

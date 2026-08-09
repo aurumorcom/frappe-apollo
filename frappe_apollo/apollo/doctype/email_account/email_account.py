@@ -3,93 +3,90 @@ import frappe
 
 @frappe.whitelist()
 def queue_get_email_accounts():
-    """
-    RQ Job: A daily cron job that sweeps all active Accounts and enqueues the FS Job get_email_accounts for each.
-    """
-    accounts = frappe.get_all("Apollo Account", fields=["name"])
-    method_name = "frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts"
-    for acc in accounts:
-        doc = frappe.get_doc("Apollo Account", acc.name)
-        if (
-            doc.get_password("api_key", raise_exception=False)
-            or doc.get_password("access_token", raise_exception=False)
-            or doc.access_token
-        ):
-            already_queued = False
-            if frappe.db.table_exists("FS Job"):
-                already_queued = bool(
-                    frappe.db.exists(
-                        "FS Job",
-                        {
-                            "job_name": method_name,
-                            "status": "queued",
-                            "arguments": ["like", f"%{acc.name}%"],
-                        },
-                    )
-                )
+	"""
+	RQ Job: A daily cron job that sweeps all active Accounts and enqueues the FS Job get_email_accounts for each.
+	"""
+	accounts = frappe.get_all("Apollo Account", fields=["name"])
+	method_name = "frappe_apollo.apollo.doctype.email_account.email_account.get_email_accounts"
+	for acc in accounts:
+		doc = frappe.get_doc("Apollo Account", acc.name)
+		if (
+			doc.get_password("api_key", raise_exception=False)
+			or doc.get_password("access_token", raise_exception=False)
+			or doc.access_token
+		):
+			already_queued = False
+			if frappe.db.table_exists("FS Job"):
+				already_queued = bool(
+					frappe.db.exists(
+						"FS Job",
+						{
+							"job_name": method_name,
+							"status": "queued",
+							"arguments": ["like", f"%{acc.name}%"],
+						},
+					)
+				)
 
-            if not already_queued:
-                frappe.enqueue(
-                    method=method_name,
-                    queue="low",
-                    account_name=acc.name,
-                )
+			if not already_queued:
+				frappe.enqueue(
+					method=method_name,
+					queue="low",
+					account_name=acc.name,
+				)
+
 
 def get_email_accounts(account_name):
-    """
-    FS Job: Uses ApolloClient.get_email_accounts() to fetch mailboxes.
-    Upserts Email Account records in Frappe with apollo_ids mapping.
-    """
-    from frappe_apollo.integrations.apollo import ApolloClient
+	"""
+	FS Job: Uses ApolloClient.get_email_accounts() to fetch mailboxes.
+	Upserts Email Account records in Frappe with apollo_ids mapping.
+	"""
+	from frappe_apollo.integrations.apollo import ApolloClient
 
-    client = ApolloClient(account_name)
-    try:
-        mailboxes = client.get_email_accounts()
-        for mb in mailboxes.get("email_accounts", []):
-            if not mb.get("active"):
-                continue
+	client = ApolloClient(account_name)
+	try:
+		mailboxes = client.get_email_accounts()
+		for mb in mailboxes.get("email_accounts") or []:
+			if not mb.get("active"):
+				continue
 
-            email_id = mb.get("email")
-            if not email_id:
-                continue
+			email_id = mb.get("email")
+			if not email_id:
+				continue
 
-            email_account_name = frappe.db.get_value("Email Account", {"email_id": email_id}, "name")
-            apollo_id = mb.get("id")
+			email_account_name = frappe.db.get_value("Email Account", {"email_id": email_id}, "name") or (
+				email_id if frappe.db.exists("Email Account", email_id) else None
+			)
+			apollo_id = mb.get("id")
 
-            if email_account_name:
-                doc = frappe.get_doc("Email Account", email_account_name)
-                # Check if account is already mapped
-                account_found = False
-                for acc in doc.get("apollo_ids", []):
-                    if acc.account == account_name:
-                        account_found = True
-                        if acc.apollo_id != apollo_id:
-                            acc.apollo_id = apollo_id
-                            doc.save(ignore_permissions=True)
-                        break
+			if email_account_name:
+				doc = frappe.get_doc("Email Account", email_account_name)
+				# Check if account is already mapped
+				account_found = False
+				for acc in doc.get("apollo_ids", []):
+					if acc.account == account_name:
+						account_found = True
+						if acc.apollo_id != apollo_id:
+							acc.apollo_id = apollo_id
+							doc.save(ignore_permissions=True)
+						break
 
-                if not account_found:
-                    doc.append("apollo_ids", {
-                        "account": account_name,
-                        "apollo_id": apollo_id
-                    })
-                    doc.save(ignore_permissions=True)
-            else:
-                doc = frappe.get_doc({
-                    "doctype": "Email Account",
-                    "email_account_name": email_id,
-                    "email_id": email_id,
-                    "service": "Apollo",
-                    "enable_outgoing": 0,
-                    "enable_incoming": 0,
-                    "apollo_ids": [
-                        {
-                            "account": account_name,
-                            "apollo_id": apollo_id
-                        }
-                    ]
-                })
-                doc.insert(ignore_permissions=True)
-    except Exception:
-        frappe.log_error(f"Failed to get mailboxes for {account_name}", "Apollo Integration")
-        raise
+				if not account_found:
+					doc.append("apollo_ids", {"account": account_name, "apollo_id": apollo_id})
+					doc.save(ignore_permissions=True)
+			else:
+				doc = frappe.get_doc(
+					{
+						"doctype": "Email Account",
+						"email_account_name": email_id,
+						"email_id": email_id,
+						"service": "Apollo",
+						"enable_outgoing": 0,
+						"enable_incoming": 0,
+						"apollo_ids": [{"account": account_name, "apollo_id": apollo_id}],
+					}
+				)
+				doc.insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(f"Failed to get mailboxes for {account_name}", "Apollo Integration")
+		raise

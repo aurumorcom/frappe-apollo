@@ -139,15 +139,11 @@ class TestCommunicationOverride(UnitTestCase):
 			schedules.append(m)
 		mock_cadence.get.side_effect = lambda k, d=[]: schedules if k == "cadence_schedules" else d
 
-		mock_get_doc.side_effect = [
-			mock_comm,
-			mock_mcc,
-			mock_account,
-			mock_provider,
-			mock_cadence
-		]
+		mock_get_doc.side_effect = [mock_comm, mock_mcc, mock_account, mock_provider, mock_cadence]
 		mock_get_value.side_effect = lambda dt, *args: 1 if dt == "Cadence Provider" else None
-		mock_get_all.side_effect = lambda dt, *args, **kwargs: [MagicMock(apollo_id="p-1")] if dt == "CRM Lead Apollo ID" else []
+		mock_get_all.side_effect = lambda dt, *args, **kwargs: (
+			[MagicMock(apollo_id="p-1")] if dt == "CRM Lead Apollo ID" else []
+		)
 
 		with self.assertRaises(SuspendJob) as ctx:
 			update_a_contact("Comm-1")
