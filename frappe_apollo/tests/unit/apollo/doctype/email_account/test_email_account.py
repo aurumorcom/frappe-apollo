@@ -113,3 +113,17 @@ class TestEmailAccount(UnitTestCase):
 		doc_primary.append.assert_called_once_with("apollo_ids", {"account": "Acc1", "apollo_id": "mb_primary_123"})
 		doc_alias.append.assert_called_once_with("apollo_ids", {"account": "Acc1", "apollo_id": "mb_primary_123"})
 
+	@patch("frappe_apollo.integrations.apollo.ApolloClient")
+	def test_get_email_accounts_resets_reentrancy_flag_in_finally_block(self, mock_client_cls):
+		mock_client = mock_client_cls.return_value
+		mock_client.get_email_accounts.side_effect = Exception("API error")
+
+		frappe.flags.is_apollo_email_account_update = False
+
+		with self.assertRaises(Exception):
+			get_email_accounts("Acc1")
+
+		# Ensure flag was reset back to False in the finally block
+		self.assertFalse(frappe.flags.is_apollo_email_account_update)
+
+
