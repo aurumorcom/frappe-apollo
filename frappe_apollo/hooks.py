@@ -135,24 +135,20 @@ before_uninstall = "frappe_apollo.uninstall.before_uninstall"
 doc_events = {
 	"Cadence": {
 		"on_update": "frappe_apollo.apollo.doctype.cadence.cadence.on_update",
-		"on_trash": "frappe_apollo.apollo.doctype.cadence.cadence.on_trash"
+		"on_trash": "frappe_apollo.apollo.doctype.cadence.cadence.on_trash",
 	},
 	"Cadence Provider": {
 		"on_update": "frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.on_update"
 	},
-	"Communication": {
-		"on_update": "frappe_apollo.apollo.doctype.communication.communication.on_update"
-	},
+	"Communication": {"on_update": "frappe_apollo.apollo.doctype.communication.communication.on_update"},
 	"Multi Channel Cadence": {
 		"before_save": "frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.before_save",
-		"on_update": "frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.on_update"
-	}
+		"on_update": "frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.on_update",
+	},
 }
 
 scheduler_events = {
-	"daily": [
-		"frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"
-	]
+	"daily": ["frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"]
 }
 
 controller_events = {
@@ -161,112 +157,108 @@ controller_events = {
 		"rate_limit_per_hour": 200,
 		"rate_limit_per_day": 600,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.apollo_field.apollo_field.create_a_field": {
 		"rate_limit_per_minute": 50,
 		"rate_limit_per_hour": 200,
 		"rate_limit_per_day": 600,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.apollo_field.apollo_field.provision_a_field": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.apollo_field.apollo_field.enqueue_provision_cadence_fields": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
-	"frappe_apollo.webhook.process_webhook": {
-		"rate_limit_per_minute": 50,
-		"retries": 3,
-		"timeout": 300
-	},
+	"frappe_apollo.webhook.process_webhook": {"rate_limit_per_minute": 50, "retries": 3, "timeout": 300},
 	"frappe_apollo.apollo.doctype.cadence.cadence.update_sequence_steps": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.cadence.cadence.provision_sequences_fields_and_steps": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.cadence.cadence.update_sequences": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.cadence.cadence.archive_sequences": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.cadence.cadence.toggle_cadence_mccs": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.cadence.cadence._disable_cadence_mccs": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.apollo_account.apollo_account.provision_sequence": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.crm_lead.crm_lead._create_a_contact": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.crm_lead.crm_lead.create_a_contact": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.crm_lead.crm_lead.update_a_contact": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._assign_contact_to_sequence": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.update_sequence_contact_status": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence._stop_contact_in_sequence": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
+		"timeout": 300,
 	},
 	"frappe_apollo.apollo.doctype.communication.communication.update_a_contact": {
 		"rate_limit_per_minute": 50,
 		"retries": 3,
-		"timeout": 300
-	}
+		"timeout": 300,
+	},
 }
 
 # after_install = "frappe_apollo.setup.after_install"
 
 fixtures = [
 	{"dt": "Custom Field", "filters": [["module", "=", "Apollo"]]},
-	{"dt": "Property Setter", "filters": [["module", "in", ["Apollo", "frappe_apollo"]]]}
+	{"dt": "Property Setter", "filters": [["module", "in", ["Apollo", "frappe_apollo"]]]},
 ]
 
 
@@ -358,4 +350,3 @@ fixtures = [
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-
