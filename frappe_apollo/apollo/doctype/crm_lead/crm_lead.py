@@ -86,6 +86,7 @@ def _create_a_contact(mcc_name):
 
 	if account_name not in apollo_accounts:
 		lead.append("apollo_ids", {"account": account_name, "apollo_id": ""})
+		lead.flags.ignore_mandatory = True
 		lead.save(ignore_permissions=True)
 
 	# We check if apollo_id is set

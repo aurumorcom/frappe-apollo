@@ -194,7 +194,7 @@ def add_contact_to_sequence(mcc_name):
 	)
 	if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
 		wait_for_event(
-			event_key=f"doc:CRM Lead:on_update:{mcc.recipient}",
+			event_key=f"doc:CRM Lead:{mcc.recipient}:on_update",
 			condition=f"[row for row in argument.get('apollo_ids', []) if row.get('account') == {json.dumps(account_name)} and row.get('apollo_id')]",
 		)
 		mcc.reload()

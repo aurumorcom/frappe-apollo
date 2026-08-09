@@ -166,7 +166,9 @@ class TestMCCIntegration(IntegrationTestCase):
 		_create_a_contact("mcc1")
 		add_contact_to_sequence("mcc1")
 
-		mock_client.add_contacts_to_sequence.assert_called_once_with("pid1", "seq1", "mb_apollo_1")
+		mock_client.add_contacts_to_sequence.assert_called_once_with(
+			"pid1", "seq1", "mb_apollo_1", email_address=mock_email_account.email_id
+		)
 
 	@patch("frappe.get_doc")
 	@patch("frappe.db.get_value")
