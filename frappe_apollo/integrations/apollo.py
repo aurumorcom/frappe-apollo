@@ -8,6 +8,7 @@ from frappe.model.document import Document
 class ApolloRateLimitError(Exception):
 	pass
 
+
 class ApolloClient:
 	base_url = "https://api.apollo.io/api/v1"
 
@@ -31,17 +32,13 @@ class ApolloClient:
 					if campaign.get("id") == sequence_id:
 						return {
 							"emailer_campaign": campaign,
-							"emailer_steps": campaign.get("emailer_steps") or []
+							"emailer_steps": campaign.get("emailer_steps") or [],
 						}
 			page += 1
 		return {"emailer_campaign": {}, "emailer_steps": []}
 
 	def create_sequence(self, name, permissions="team_can_use", active=True, emailer_steps=None):
-		payload = {
-			"name": name,
-			"permissions": permissions,
-			"active": active
-		}
+		payload = {"name": name, "permissions": permissions, "active": active}
 		if emailer_steps:
 			payload["emailer_steps"] = emailer_steps
 
@@ -81,15 +78,14 @@ class ApolloClient:
 
 	def search_sequences(self, q_name=None, page=1, per_page=25):
 		endpoint = "/emailer_campaigns/search"
-		payload = {
-			"page": page,
-			"per_page": per_page
-		}
+		payload = {"page": page, "per_page": per_page}
 		if q_name:
 			payload["q_name"] = q_name
 		return self._request("POST", endpoint, json=payload)
 
-	def create_contact(self, email, first_name=None, last_name=None, title=None, organization_name=None, custom_fields=None):
+	def create_contact(
+		self, email, first_name=None, last_name=None, title=None, organization_name=None, custom_fields=None
+	):
 		endpoint = "/contacts"
 		if isinstance(email, dict):
 			payload = email
@@ -99,7 +95,7 @@ class ApolloClient:
 				"first_name": first_name,
 				"last_name": last_name,
 				"title": title,
-				"organization_name": organization_name
+				"organization_name": organization_name,
 			}
 			if custom_fields:
 				payload["typed_custom_fields"] = custom_fields
@@ -109,9 +105,7 @@ class ApolloClient:
 		if isinstance(contact_id, dict) and "id" in contact_id:
 			contact_id = contact_id["id"]
 		endpoint = f"/contacts/{contact_id}"
-		payload = {
-			"typed_custom_fields": custom_fields
-		}
+		payload = {"typed_custom_fields": custom_fields}
 		try:
 			return self._request("PATCH", endpoint, json=payload)
 		except requests.exceptions.HTTPError as e:
@@ -124,7 +118,7 @@ class ApolloClient:
 		payload = {
 			"contact_ids": [contact_id],
 			"emailer_campaign_id": sequence_id,
-			"send_email_from_email_account_id": mailbox_id
+			"send_email_from_email_account_id": mailbox_id,
 		}
 		try:
 			return self._request("POST", endpoint, json=payload)
@@ -133,31 +127,28 @@ class ApolloClient:
 				params = {
 					"contact_ids[]": contact_id,
 					"emailer_campaign_id": sequence_id,
-					"send_email_from_email_account_id": mailbox_id
+					"send_email_from_email_account_id": mailbox_id,
 				}
 				return self._request("POST", endpoint, params=params)
 			raise
 
 	def create_custom_field(self, label, field_type="string"):
-		payload = {
-			"label": label,
-			"type": field_type,
-			"modality": "contact"
-		}
+		payload = {"label": label, "type": field_type, "modality": "contact"}
 		return self._request("POST", "/fields", json=payload)
 
 	def update_sequence_contact_status(self, person_id, sequence_id, action):
 		endpoint = "/emailer_campaigns/remove_or_stop_contact_ids"
-		payload = {
-			"contact_ids[]": [person_id],
-			"emailer_campaign_ids[]": [sequence_id],
-			"mode": action
-		}
+		payload = {"contact_ids[]": [person_id], "emailer_campaign_ids[]": [sequence_id], "mode": action}
 		return self._request("POST", endpoint, json=payload)
 
 	def _request(self, method, endpoint, **kwargs):
 		expired_dt = self.account.get("expired")
-		if self.account.refresh_token and expired_dt and isinstance(expired_dt, datetime) and expired_dt < frappe.utils.now_datetime():
+		if (
+			self.account.refresh_token
+			and expired_dt
+			and isinstance(expired_dt, datetime)
+			and expired_dt < frappe.utils.now_datetime()
+		):
 			self._refresh_oauth_token()
 
 		url = f"{self.base_url}{endpoint}"
@@ -177,15 +168,14 @@ class ApolloClient:
 		return response.json()
 
 	def _get_headers(self):
-		headers = {
-			"Cache-Control": "no-cache",
-			"Content-Type": "application/json"
-		}
+		headers = {"Cache-Control": "no-cache", "Content-Type": "application/json"}
 		api_key = self.account.get_password("api_key", raise_exception=False)
 		if api_key:
 			headers["X-Api-Key"] = api_key
 		elif self.account.access_token:
-			headers["Authorization"] = f"Bearer {self.account.get_password('access_token', raise_exception=False)}"
+			headers["Authorization"] = (
+				f"Bearer {self.account.get_password('access_token', raise_exception=False)}"
+			)
 		return headers
 
 	def _refresh_oauth_token(self):

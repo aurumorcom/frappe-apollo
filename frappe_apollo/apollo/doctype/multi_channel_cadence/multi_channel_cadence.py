@@ -1,3 +1,5 @@
+import json
+
 import frappe
 from frappe_controller.utils.controller import wait_for_event
 
@@ -14,19 +16,14 @@ def before_save(doc, method=None):
 
 	cadence = frappe.get_doc("Cadence", doc.cadence_name)
 
-	active_mappings = [
-		row for row in cadence.get("apollo_ids", [])
-		if row.sender == doc.sender and row.status == "Active"
-	]
+	active_mappings = [row for row in cadence.get("apollo_ids", []) if row.sender == doc.sender]
 
 	if doc.apollo_account:
 		account_seq_id = frappe.db.get_value("Apollo Account", doc.apollo_account, "apollo_sequence_id")
 		if account_seq_id:
 			doc.apollo_sequence_id = account_seq_id
 		if doc.status == "Draft":
-			is_valid = any(
-				m.account == doc.apollo_account for m in active_mappings
-			)
+			is_valid = any(m.account == doc.apollo_account for m in active_mappings)
 			if is_valid:
 				return
 		else:
@@ -38,7 +35,9 @@ def before_save(doc, method=None):
 	if len(active_mappings) == 1:
 		selected_mapping = active_mappings[0]
 		doc.apollo_account = selected_mapping.account
-		doc.apollo_sequence_id = frappe.db.get_value("Apollo Account", selected_mapping.account, "apollo_sequence_id")
+		doc.apollo_sequence_id = frappe.db.get_value(
+			"Apollo Account", selected_mapping.account, "apollo_sequence_id"
+		)
 	else:
 		account_load: dict[str, int] = {row.account: 0 for row in active_mappings}
 		active_mccs = frappe.get_all(
@@ -46,25 +45,27 @@ def before_save(doc, method=None):
 			filters={
 				"sender": doc.sender,
 				"status": ["in", ["Active", "In Progress"]],
-				"apollo_account": ["is", "set"]
+				"apollo_account": ["is", "set"],
 			},
-			fields=["apollo_account"]
+			fields=["apollo_account"],
 		)
 
 		for mcc in active_mccs:
 			if mcc.apollo_account in account_load:
 				account_load[mcc.apollo_account] += 1
 
-		selected_mapping = min(
-			active_mappings,
-			key=lambda x: (account_load.get(x.account, 0), x.name)
-		)
+		selected_mapping = min(active_mappings, key=lambda x: (account_load.get(x.account, 0), x.name))
 
 		doc.apollo_account = selected_mapping.account
-		doc.apollo_sequence_id = frappe.db.get_value("Apollo Account", selected_mapping.account, "apollo_sequence_id")
+		doc.apollo_sequence_id = frappe.db.get_value(
+			"Apollo Account", selected_mapping.account, "apollo_sequence_id"
+		)
+
 
 def _is_contact_in_sequence(doc):
-	return bool(getattr(doc, "apollo_contact_id", None) or (isinstance(doc, dict) and doc.get("apollo_contact_id")))
+	return bool(
+		getattr(doc, "apollo_contact_id", None) or (isinstance(doc, dict) and doc.get("apollo_contact_id"))
+	)
 
 
 def on_update(doc, method=None):
@@ -75,12 +76,12 @@ def on_update(doc, method=None):
 		frappe.enqueue(
 			method="frappe_apollo.apollo.doctype.crm_lead.crm_lead._create_a_contact",
 			queue="low",
-			mcc_name=doc.name
+			mcc_name=doc.name,
 		)
 		frappe.enqueue(
 			method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
 			queue="high",
-			mcc_name=doc.name
+			mcc_name=doc.name,
 		)
 
 	went_to_disabled = doc.status == "Disabled" and before_status != "Disabled"
@@ -92,13 +93,13 @@ def on_update(doc, method=None):
 				method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.update_sequence_contact_status",
 				queue="medium",
 				mcc_name=doc.name,
-				mode="stop"
+				mode="stop",
 			)
 		elif came_from_disabled:
 			frappe.enqueue(
 				method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
 				queue="high",
-				mcc_name=doc.name
+				mcc_name=doc.name,
 			)
 
 
@@ -113,25 +114,28 @@ def add_contact_to_sequence(mcc_name):
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
 		wait_for_event(
-			event_key="doc:Cadence Provider:Apollo:on_update",
-			condition="argument.get('enabled') == 1"
+			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
 	if not mcc.apollo_account:
 		return
 
 	if not mcc.apollo_sequence_id:
-		mcc.apollo_sequence_id = frappe.db.get_value("Apollo Account", mcc.apollo_account, "apollo_sequence_id")
+		mcc.apollo_sequence_id = frappe.db.get_value(
+			"Apollo Account", mcc.apollo_account, "apollo_sequence_id"
+		)
 
 	if not mcc.apollo_sequence_id:
 		wait_for_event(
 			event_key=f"doc:Apollo Account:{mcc.apollo_account}:on_update",
-			condition="argument.get('apollo_sequence_id')"
+			condition="argument.get('apollo_sequence_id')",
 		)
 		mcc.reload()
 		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
 			return
-		mcc.apollo_sequence_id = frappe.db.get_value("Apollo Account", mcc.apollo_account, "apollo_sequence_id")
+		mcc.apollo_sequence_id = frappe.db.get_value(
+			"Apollo Account", mcc.apollo_account, "apollo_sequence_id"
+		)
 		if not mcc.apollo_sequence_id:
 			return
 		mcc.save(ignore_permissions=True)
@@ -142,7 +146,7 @@ def add_contact_to_sequence(mcc_name):
 	if not email_account_name:
 		wait_for_event(
 			event_key="doc:User Email:after_insert",
-			condition=f"argument.get('parent') == '{sender}'"
+			condition=f"argument.get('parent') == {json.dumps(sender)}",
 		)
 		mcc.reload()
 		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
