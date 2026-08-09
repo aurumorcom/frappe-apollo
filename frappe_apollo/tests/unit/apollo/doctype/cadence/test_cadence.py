@@ -86,9 +86,7 @@ class TestCadenceProvisioning(UnitTestCase):
 
 	@patch("frappe_apollo.apollo.doctype.cadence.cadence.wait_for_event")
 	@patch("frappe.db.get_value")
-	def test_update_sequence_steps_suspends_when_account_unauthorized(
-		self, mock_db_get_value, mock_wait
-	):
+	def test_update_sequence_steps_suspends_when_account_unauthorized(self, mock_db_get_value, mock_wait):
 		def db_get_value_side_effect(dt, *args, **kwargs):
 			if dt == "Cadence Provider":
 				return 1

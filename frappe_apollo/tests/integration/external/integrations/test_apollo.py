@@ -240,6 +240,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		self.client.account.reload()
 
 		from unittest.mock import MagicMock, patch
+
 		# Proactive refresh should trigger before making the request
 		with patch("frappe_apollo.integrations.apollo.requests.post") as mock_post:
 			mock_response = MagicMock()

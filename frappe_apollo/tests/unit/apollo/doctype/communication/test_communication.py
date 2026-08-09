@@ -124,7 +124,13 @@ class TestCommunicationOverride(UnitTestCase):
 		mock_comm.get.return_value = None
 		mock_comm.cadence_schedule = "Sch-5"
 
-		mock_mcc = MagicMock(sender="user@example.com", cadence_name="Cad-1", recipient="Lead-1", apollo_account="Acc-1", apollo_sequence_id="Seq-1")
+		mock_mcc = MagicMock(
+			sender="user@example.com",
+			cadence_name="Cad-1",
+			recipient="Lead-1",
+			apollo_account="Acc-1",
+			apollo_sequence_id="Seq-1",
+		)
 		mock_account = MagicMock(status="Authorized")
 
 		mock_provider = MagicMock()

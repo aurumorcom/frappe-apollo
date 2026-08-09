@@ -130,7 +130,7 @@ class TestMultiChannelCadence(UnitTestCase):
 		mock_enqueue.assert_called_once_with(
 			method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
 			queue="high",
-			mcc_name="MCC-1"
+			mcc_name="MCC-1",
 		)
 
 	@patch("frappe.enqueue")

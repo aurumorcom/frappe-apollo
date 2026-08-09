@@ -166,15 +166,14 @@ def update_a_contact(lead_name, account_name):
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
 		wait_for_event(
-			event_key="doc:Cadence Provider:Apollo:on_update",
-			condition="argument.get('enabled') == 1"
+			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
 		wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
-			condition="argument.get('status') == 'Authorized'"
+			condition="argument.get('status') == 'Authorized'",
 		)
 		account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 		if account_status != "Authorized":

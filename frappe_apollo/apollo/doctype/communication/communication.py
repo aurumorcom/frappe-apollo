@@ -151,7 +151,7 @@ def update_a_contact(comm_name):
 	if not response_apollo_id:
 		wait_for_event(
 			event_key=f"doc:Apollo Field:{response_field_name}:on_update",
-			condition=f"any(r.get('account') == '{account_name}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))"
+			condition=f"any(r.get('account') == '{account_name}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))",
 		)
 		response_field.reload()
 		for row in response_field.get("apollo_ids", []):

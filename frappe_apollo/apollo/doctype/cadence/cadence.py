@@ -317,9 +317,9 @@ def toggle_cadence_mccs(cadence_name):
 			"Multi Channel Cadence",
 			filters={
 				"cadence_name": cadence_name,
-				"status": ["in", ["Scheduled", "In Progress", "Active", "Draft"]]
+				"status": ["in", ["Scheduled", "In Progress", "Active", "Draft"]],
 			},
-			fields=["name"]
+			fields=["name"],
 		)
 		for mcc in active_mccs:
 			mcc_name = mcc.get("name") if isinstance(mcc, dict) else getattr(mcc, "name", None)

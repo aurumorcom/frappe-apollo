@@ -165,10 +165,7 @@ class TestApolloClient(UnitTestCase):
 		client = ApolloClient("Test Account")
 		target_seq = {"id": "seq_123", "name": "Target", "emailer_steps": [{"id": "step_1"}]}
 		with patch.object(client, "search_sequences") as mock_search:
-			mock_search.return_value = {
-				"pagination": {"total_pages": 1},
-				"emailer_campaigns": [target_seq]
-			}
+			mock_search.return_value = {"pagination": {"total_pages": 1}, "emailer_campaigns": [target_seq]}
 			res = client.get_sequence("seq_123")
 
 			self.assertEqual(res["emailer_campaign"], target_seq)

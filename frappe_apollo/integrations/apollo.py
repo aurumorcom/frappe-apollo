@@ -194,7 +194,7 @@ class ApolloClient:
 			"grant_type": "refresh_token",
 			"refresh_token": self.account.get_password("refresh_token", raise_exception=False),
 			"client_id": self.account.client_id,
-			"client_secret": self.account.get_password("client_secret", raise_exception=False)
+			"client_secret": self.account.get_password("client_secret", raise_exception=False),
 		}
 		response = requests.post(url, data=payload)
 		try:

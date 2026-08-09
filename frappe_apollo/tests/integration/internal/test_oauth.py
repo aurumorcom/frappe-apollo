@@ -10,13 +10,15 @@ class TestOAuth(IntegrationTestCase):
 
 		if not frappe.db.exists("Apollo Account", "Test Account OAuth"):
 			# Create Account
-			frappe.get_doc({
-				"doctype": "Apollo Account",
-				"account_name": "Test Account OAuth",
-				"webhook_bearer_token": "secret123",
-				"client_id": "client_id",
-				"client_secret": "client_secret"
-			}).insert()
+			frappe.get_doc(
+				{
+					"doctype": "Apollo Account",
+					"account_name": "Test Account OAuth",
+					"webhook_bearer_token": "secret123",
+					"client_id": "client_id",
+					"client_secret": "client_secret",
+				}
+			).insert()
 
 	@classmethod
 	def tearDownClass(cls):

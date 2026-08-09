@@ -161,7 +161,7 @@ def add_contact_to_sequence(mcc_name):
 	if not apollo_mailbox_id:
 		wait_for_event(
 			event_key=f"doc:Email Account:{email_account_name}:on_update",
-			condition=f"any(row.get('account') == '{account_name}' and row.get('apollo_id') for row in argument.get('apollo_ids', []))"
+			condition=f"[row for row in argument.get('apollo_ids', []) if row.get('account') == {json.dumps(account_name)} and row.get('apollo_id')]",
 		)
 		email_account.reload()
 		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
