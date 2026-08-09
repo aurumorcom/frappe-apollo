@@ -141,6 +141,9 @@ doc_events = {
 		"on_update": "frappe_apollo.apollo.doctype.cadence_provider.cadence_provider.on_update"
 	},
 	"Communication": {"on_update": "frappe_apollo.apollo.doctype.communication.communication.on_update"},
+	"Email Account": {
+		"on_update": "frappe_apollo.apollo.doctype.email_account.email_account.on_update"
+	},
 	"Multi Channel Cadence": {
 		"before_save": "frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.before_save",
 		"on_update": "frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.on_update",
@@ -148,7 +151,7 @@ doc_events = {
 }
 
 scheduler_events = {
-	"daily": ["frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"]
+	"daily": ["frappe_apollo.apollo.doctype.email_account.email_account.enqueue_get_email_accounts"]
 }
 
 controller_events = {
