@@ -188,3 +188,49 @@ class TestMultiChannelCadence(UnitTestCase):
 		# Verify that condition_str is valid Python syntax (no SyntaxError)
 		ast.parse(condition_str)
 		self.assertIn('"Abhishek\'s Apollo"', condition_str)
+
+	@patch("frappe_apollo.integrations.apollo.ApolloClient")
+	@patch("frappe.get_all")
+	@patch("frappe.db.exists")
+	@patch("frappe.db.get_value")
+	@patch("frappe.get_doc")
+	def test_add_contact_to_sequence_resolves_cadence_email_account(
+		self, mock_get_doc, mock_get_value, mock_exists, mock_get_all, mock_client_cls
+	):
+		mcc = MagicMock()
+		mcc.status = "Scheduled"
+		mcc.cadence_name = "Cad1"
+		mcc.sender = "user@example.com"
+		mcc.apollo_account = "Acc1"
+		mcc.apollo_sequence_id = "seq1"
+		mcc.recipient = "lead1"
+
+		cadence = MagicMock()
+		row_mapping = MagicMock(account="Acc1", sender="user@example.com", email_account="Custom Email Account")
+		cadence.get.return_value = [row_mapping]
+
+		email_acc = MagicMock()
+		email_acc.email_id = "alias@example.com"
+		email_acc.get.return_value = [MagicMock(account="Acc1", apollo_id="mb123")]
+
+		def get_doc_side_effect(doctype, name=None):
+			if doctype == "Multi Channel Cadence":
+				return mcc
+			elif doctype == "Cadence":
+				return cadence
+			elif doctype == "Email Account":
+				return email_acc
+			return MagicMock()
+
+		mock_get_doc.side_effect = get_doc_side_effect
+		mock_exists.return_value = True
+		mock_get_value.side_effect = lambda dt, *args, **kwargs: 1 if dt == "Cadence Provider" else "seq1"
+		mock_get_all.return_value = [frappe._dict({"apollo_id": "contact_lead_123"})]
+
+		mock_client = mock_client_cls.return_value
+
+		add_contact_to_sequence("mcc1")
+
+		mock_client.add_contacts_to_sequence.assert_called_once_with(
+			"contact_lead_123", "seq1", "mb123", email_address="alias@example.com"
+		)

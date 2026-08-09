@@ -141,8 +141,19 @@ def add_contact_to_sequence(mcc_name):
 		mcc.save(ignore_permissions=True)
 
 	sender = mcc.sender
+	account_name = mcc.apollo_account
 
-	email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
+	email_account_name = None
+	if mcc.cadence_name and frappe.db.exists("Cadence", mcc.cadence_name):
+		cadence_doc = frappe.get_doc("Cadence", mcc.cadence_name)
+		for row in cadence_doc.get("apollo_ids", []):
+			if row.account == account_name and row.sender == sender and getattr(row, "email_account", None):
+				email_account_name = row.email_account
+				break
+
+	if not email_account_name:
+		email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
+
 	if not email_account_name:
 		wait_for_event(
 			event_key="doc:User Email:after_insert",
@@ -153,8 +164,8 @@ def add_contact_to_sequence(mcc_name):
 			return
 		email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
 
-	account_name = mcc.apollo_account
 	email_account = frappe.get_doc("Email Account", email_account_name)
+	send_email_from_email_address = getattr(email_account, "email_id", None) or getattr(email_account, "email_address", None)
 
 	apollo_mailbox_id = None
 	for row in email_account.get("apollo_ids", []):
@@ -201,7 +212,12 @@ def add_contact_to_sequence(mcc_name):
 
 	client = ApolloClient(account_name)
 	try:
-		client.add_contacts_to_sequence(contact_apollo_id, mcc.apollo_sequence_id, apollo_mailbox_id)
+		client.add_contacts_to_sequence(
+			contact_apollo_id,
+			mcc.apollo_sequence_id,
+			apollo_mailbox_id,
+			email_address=send_email_from_email_address,
+		)
 		mcc.db_set("apollo_contact_id", contact_apollo_id)
 	except Exception as e:
 		frappe.log_error(title="Failed to assign sequence in Apollo", message=str(e))
