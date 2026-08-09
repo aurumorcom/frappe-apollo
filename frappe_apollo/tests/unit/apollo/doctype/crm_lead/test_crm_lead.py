@@ -99,6 +99,10 @@ class TestCRMLead(UnitTestCase):
 			account_name="Acc1",
 		)
 		mock_wait.assert_called_once()
+		# Verify condition string safely inspects child table dicts
+		condition_arg = mock_wait.call_args[1].get("condition") or mock_wait.call_args[0][1]
+		self.assertIn("row.get('account')", condition_arg)
+		self.assertNotIn("argument.get('apollo_id')", condition_arg)
 
 	@patch("frappe.get_doc")
 	@patch("frappe.db.count")
