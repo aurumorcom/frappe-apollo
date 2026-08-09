@@ -8,11 +8,12 @@ from frappe_apollo.integrations.apollo import ApolloClient, ApolloRateLimitError
 
 
 class TestApolloClient(UnitTestCase):
-
 	@patch("frappe.get_doc")
 	def test_get_headers_api_key(self, mock_get_doc):
 		mock_account = MagicMock()
-		mock_account.get_password.side_effect = lambda field, raise_exception=False: "test_key" if field == "api_key" else None
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: (
+			"test_key" if field == "api_key" else None
+		)
 		mock_account.access_token = None
 		mock_account.refresh_token = None
 		mock_get_doc.return_value = mock_account
@@ -26,7 +27,9 @@ class TestApolloClient(UnitTestCase):
 	@patch("frappe.get_doc")
 	def test_get_headers_oauth(self, mock_get_doc):
 		mock_account = MagicMock()
-		mock_account.get_password.side_effect = lambda field, raise_exception=False: "actual_token_value" if field == "access_token" else None
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: (
+			"actual_token_value" if field == "access_token" else None
+		)
 		mock_account.access_token = "some_token"
 		mock_get_doc.return_value = mock_account
 
@@ -40,7 +43,9 @@ class TestApolloClient(UnitTestCase):
 	@patch("frappe_apollo.integrations.apollo.requests.request")
 	def test_rate_limit_error(self, mock_request, mock_get_doc):
 		mock_account = MagicMock()
-		mock_account.get_password.side_effect = lambda field, raise_exception=False: "key" if field == "api_key" else None
+		mock_account.get_password.side_effect = lambda field, raise_exception=False: (
+			"key" if field == "api_key" else None
+		)
 		mock_account.refresh_token = None
 		mock_account.get.return_value = None
 		mock_get_doc.return_value = mock_account
@@ -115,7 +120,9 @@ class TestApolloClient(UnitTestCase):
 	@patch("frappe.db.commit")
 	@patch("frappe.get_doc")
 	@patch("frappe_apollo.integrations.apollo.requests.post")
-	def test_refresh_oauth_token_failure_marks_unauthorized(self, mock_post, mock_get_doc, mock_commit, mock_log_error):
+	def test_refresh_oauth_token_failure_marks_unauthorized(
+		self, mock_post, mock_get_doc, mock_commit, mock_log_error
+	):
 		mock_account = MagicMock()
 		mock_account.get_password.return_value = "token"
 		mock_get_doc.return_value = mock_account

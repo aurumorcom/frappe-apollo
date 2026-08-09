@@ -8,7 +8,6 @@ from frappe_apollo.apollo.doctype.communication.communication import on_update, 
 
 
 class TestCommunicationOverride(UnitTestCase):
-
 	@patch("frappe.enqueue")
 	def test_on_update_enqueues_when_status_changes_to_scheduled(self, mock_enqueue):
 		mock_doc = MagicMock()
@@ -23,7 +22,7 @@ class TestCommunicationOverride(UnitTestCase):
 		mock_enqueue.assert_called_once_with(
 			method="frappe_apollo.apollo.doctype.communication.communication.update_a_contact",
 			queue="medium",
-			comm_name="Comm-1"
+			comm_name="Comm-1",
 		)
 
 	@patch("frappe.get_doc")
@@ -53,7 +52,7 @@ class TestCommunicationOverride(UnitTestCase):
 
 		mock_wait.assert_called_once_with(
 			event_key=f"doc:Multi Channel Cadence:{mock_mcc.name}:on_update",
-			condition="argument.get('apollo_account') and argument.get('apollo_sequence_id')"
+			condition="argument.get('apollo_account') and argument.get('apollo_sequence_id')",
 		)
 
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")

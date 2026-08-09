@@ -12,9 +12,12 @@ class TestApolloExternalAPI(IntegrationTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		import os
+
 		# Use the account provided by the user via site_config or environment variable
 		cls.account_name = frappe.conf.get("apollo_test_account") or os.environ.get("APOLLO_TEST_ACCOUNT")
-		cls.sequence_id = frappe.conf.get("apollo_test_sequence_id") or os.environ.get("APOLLO_TEST_SEQUENCE_ID")
+		cls.sequence_id = frappe.conf.get("apollo_test_sequence_id") or os.environ.get(
+			"APOLLO_TEST_SEQUENCE_ID"
+		)
 
 		if cls.account_name and frappe.db.exists("Apollo Account", cls.account_name):
 			doc = frappe.get_doc("Apollo Account", cls.account_name)
@@ -29,7 +32,7 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			cls.account_name = "Dummy VCR Account"
 
 		if not cls.sequence_id:
-			cls.sequence_id = "6a0cdfe8da382d001cc8423e" # Default sequence ID from cassettes
+			cls.sequence_id = "6a0cdfe8da382d001cc8423e"  # Default sequence ID from cassettes
 
 	@classmethod
 	def tearDownClass(cls):
@@ -68,58 +71,60 @@ class TestApolloExternalAPI(IntegrationTestCase):
 			frappe.db.commit()
 		super().tearDown()
 
-	@my_vcr.use_cassette('test_get_email_accounts.yaml')
+	@my_vcr.use_cassette("test_get_email_accounts.yaml")
 	def test_get_email_accounts_live(self):
 		response = self.client.get_email_accounts()
 		self.assertIn("email_accounts", response)
 		self.assertIsInstance(response["email_accounts"], list)
 
-	@my_vcr.use_cassette('test_search_sequences.yaml')
+	@my_vcr.use_cassette("test_search_sequences.yaml")
 	def test_search_sequences_live(self):
 		response = self.client.search_sequences()
 		self.assertIn("emailer_campaigns", response)
 		self.assertIsInstance(response["emailer_campaigns"], list)
 
-	@my_vcr.use_cassette('test_create_contact.yaml')
+	@my_vcr.use_cassette("test_create_contact.yaml")
 	def test_create_contact_live(self):
 		lead_data = {
 			"first_name": "Test",
 			"last_name": "External API",
-			"email": "test_external_api_create@example.com"
+			"email": "test_external_api_create@example.com",
 		}
 		contact_res = self.client.create_contact(lead_data)
-		contact_id = contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
+		contact_id = (
+			contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
+		)
 		self.assertIsNotNone(contact_id)
 
-	@my_vcr.use_cassette('test_create_custom_field.yaml')
+	@my_vcr.use_cassette("test_create_custom_field.yaml")
 	def test_create_custom_field_live(self):
 		field_name = "Test External Field VCR"
 		response = self.client.create_custom_field(field_name, "string")
 		self.assertIn("typed_custom_field", response)
 		self.assertEqual(response["typed_custom_field"]["name"], field_name)
 
-	@my_vcr.use_cassette('test_update_contact.yaml')
+	@my_vcr.use_cassette("test_update_contact.yaml")
 	def test_update_contact_live(self):
 		# Setup: Create a contact to update
 		lead_data = {
 			"first_name": "Test",
 			"last_name": "External API Update",
-			"email": "test_external_api_update@example.com"
+			"email": "test_external_api_update@example.com",
 		}
 		contact_res = self.client.create_contact(lead_data)
-		contact_id = contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
+		contact_id = (
+			contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
+		)
 		self.assertIsNotNone(contact_id)
 
 		# Act: Update the contact
-		custom_fields = {
-			"test_external_field": "Test Value"
-		}
+		custom_fields = {"test_external_field": "Test Value"}
 		response = self.client.update_contact(contact_id, custom_fields)
 
 		# Assert
 		self.assertIn("contact", response)
 
-	@my_vcr.use_cassette('test_add_contacts_to_sequence.yaml')
+	@my_vcr.use_cassette("test_add_contacts_to_sequence.yaml")
 	def test_add_contacts_to_sequence_live(self):
 		# Setup: Get a mailbox ID
 		accounts_response = self.client.get_email_accounts()
@@ -131,10 +136,12 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		lead_data = {
 			"first_name": "Test",
 			"last_name": "External API Sequence",
-			"email": "test_external_api_sequence@example.com"
+			"email": "test_external_api_sequence@example.com",
 		}
 		contact_res = self.client.create_contact(lead_data)
-		contact_id = contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
+		contact_id = (
+			contact_res.get("contact", {}).get("id") if isinstance(contact_res, dict) else contact_res
+		)
 		self.assertIsNotNone(contact_id)
 
 		# Act: Add to sequence
@@ -143,11 +150,14 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		# Assert
 		self.assertIn("contacts", response)
 
-	@my_vcr.use_cassette('test_create_sequence.yaml')
+	@my_vcr.use_cassette("test_create_sequence.yaml")
 	def test_create_sequence_live(self):
 		import os
+
 		if not frappe.conf.get("apollo_test_account") and not os.environ.get("APOLLO_TEST_ACCOUNT"):
-			if not os.path.exists(os.path.join(os.path.dirname(__file__), 'cassettes', 'test_create_sequence.yaml')):
+			if not os.path.exists(
+				os.path.join(os.path.dirname(__file__), "cassettes", "test_create_sequence.yaml")
+			):
 				self.skipTest("No credentials and no cassette found for this test.")
 
 		# Ensure fields exist before creating sequence
@@ -158,29 +168,33 @@ class TestApolloExternalAPI(IntegrationTestCase):
 				pass
 
 		sequence_name = "Test External Sequence VCR"
-		emailer_steps = [{
-			"type": "auto_email",
-			"wait_time": 1,
-			"wait_mode": "day",
-			"emailer_touches": [{
-				"type": "new_thread",
-				"status": "approved",
-				"include_signature": True,
-				"emailer_template": {
-					"subject": "{{subject}}",
-					"body_html": "{{message}}"
-				}
-			}]
-		}]
+		emailer_steps = [
+			{
+				"type": "auto_email",
+				"wait_time": 1,
+				"wait_mode": "day",
+				"emailer_touches": [
+					{
+						"type": "new_thread",
+						"status": "approved",
+						"include_signature": True,
+						"emailer_template": {"subject": "{{subject}}", "body_html": "{{message}}"},
+					}
+				],
+			}
+		]
 		sequence_id = self.client.create_sequence(sequence_name, emailer_steps=emailer_steps)
 		self.assertIsNotNone(sequence_id)
 		self.assertEqual(isinstance(sequence_id, str), True)
 
-	@my_vcr.use_cassette('test_update_sequence.yaml')
+	@my_vcr.use_cassette("test_update_sequence.yaml")
 	def test_update_sequence_live(self):
 		import os
+
 		if not frappe.conf.get("apollo_test_account") and not os.environ.get("APOLLO_TEST_ACCOUNT"):
-			if not os.path.exists(os.path.join(os.path.dirname(__file__), 'cassettes', 'test_update_sequence.yaml')):
+			if not os.path.exists(
+				os.path.join(os.path.dirname(__file__), "cassettes", "test_update_sequence.yaml")
+			):
 				self.skipTest("No credentials and no cassette found for this test.")
 
 		# Ensure fields exist before creating sequence
@@ -195,21 +209,25 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		self.assertIsNotNone(sequence_id)
 
 		# Act: Update the sequence
-		emailer_steps = [{
-			"position": 1,
-			"type": "auto_email",
-			"wait_time": 1,
-			"wait_mode": "day",
-			"emailer_touches": [{
-				"type": "new_thread",
-				"status": "approved",
-				"include_signature": True,
-				"emailer_template": {
-					"subject": "{{subject_update}}",
-					"body_html": "{{message_update}}"
-				}
-			}]
-		}]
+		emailer_steps = [
+			{
+				"position": 1,
+				"type": "auto_email",
+				"wait_time": 1,
+				"wait_mode": "day",
+				"emailer_touches": [
+					{
+						"type": "new_thread",
+						"status": "approved",
+						"include_signature": True,
+						"emailer_template": {
+							"subject": "{{subject_update}}",
+							"body_html": "{{message_update}}",
+						},
+					}
+				],
+			}
+		]
 		payload = {"emailer_steps": emailer_steps}
 		response = self.client.update_sequence(sequence_id, payload)
 

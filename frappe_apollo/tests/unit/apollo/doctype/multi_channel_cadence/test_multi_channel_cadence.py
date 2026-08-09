@@ -17,7 +17,9 @@ class TestMultiChannelCadence(UnitTestCase):
 	@patch("frappe.db.get_value")
 	@patch("frappe.get_doc")
 	@patch("frappe.get_all")
-	def test_before_save_pulls_sequence_id_from_apollo_account(self, mock_get_all, mock_get_doc, mock_db_get_value):
+	def test_before_save_pulls_sequence_id_from_apollo_account(
+		self, mock_get_all, mock_get_doc, mock_db_get_value
+	):
 		mcc = MagicMock()
 		mcc.get.side_effect = lambda k, d=[]: [MagicMock(cadence_provider="Apollo")] if k == "provider" else d
 		mcc.sender = "user@example.com"
@@ -27,7 +29,7 @@ class TestMultiChannelCadence(UnitTestCase):
 		mcc.status = "Draft"
 
 		mock_cadence = MagicMock()
-		mock_mapping = MagicMock(sender="user@example.com", status="Active", account="Acc1", name="row1")
+		mock_mapping = MagicMock(sender="user@example.com", account="Acc1", name="row1")
 		mock_cadence.get.return_value = [mock_mapping]
 
 		mock_get_doc.return_value = mock_cadence
@@ -63,7 +65,9 @@ class TestMultiChannelCadence(UnitTestCase):
 	@patch("frappe.get_all")
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")
 	@patch("frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
-	def test_assign_contact_waits_for_account_sequence_id(self, mock_wait, mock_client_cls, mock_get_all, mock_get_value, mock_get_doc):
+	def test_assign_contact_waits_for_account_sequence_id(
+		self, mock_wait, mock_client_cls, mock_get_all, mock_get_value, mock_get_doc
+	):
 		mcc = MagicMock()
 		mcc.status = "Scheduled"
 		mcc.apollo_account = "Acc1"
@@ -77,8 +81,7 @@ class TestMultiChannelCadence(UnitTestCase):
 			add_contact_to_sequence("mcc1")
 
 		mock_wait.assert_called_once_with(
-			event_key="doc:Apollo Account:Acc1:on_update",
-			condition="argument.get('apollo_sequence_id')"
+			event_key="doc:Apollo Account:Acc1:on_update", condition="argument.get('apollo_sequence_id')"
 		)
 
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")
@@ -94,9 +97,7 @@ class TestMultiChannelCadence(UnitTestCase):
 
 		update_sequence_contact_status("mcc1", mode="stop")
 
-		mock_client.update_sequence_contact_status.assert_called_once_with(
-			"contact_123", "seq1", "stop"
-		)
+		mock_client.update_sequence_contact_status.assert_called_once_with("contact_123", "seq1", "stop")
 
 	@patch("frappe.enqueue")
 	def test_on_update_enqueues_stop_contact_on_deactivation(self, mock_enqueue):
