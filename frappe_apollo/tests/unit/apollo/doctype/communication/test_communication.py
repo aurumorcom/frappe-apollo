@@ -101,19 +101,20 @@ class TestCommunicationOverride(UnitTestCase):
 			mock_provider,
 			mock_cadence,
 			mock_subject_field,
-			mock_response_field
+			mock_response_field,
 		]
 
 		mock_get_value.side_effect = lambda dt, *args: 1 if dt == "Cadence Provider" else None
-		mock_get_all.side_effect = lambda dt, *args, **kwargs: [MagicMock(apollo_id="apollo-person-1")] if dt == "CRM Lead Apollo ID" else []
+		mock_get_all.side_effect = lambda dt, *args, **kwargs: (
+			[MagicMock(apollo_id="apollo-person-1")] if dt == "CRM Lead Apollo ID" else []
+		)
 
 		mock_client = mock_client_cls.return_value
 
 		update_a_contact("Comm-1")
 
 		mock_client.update_contact.assert_called_once_with(
-			"apollo-person-1",
-			{"apollo-subject-1": "subject line 1", "apollo-body-1": "content body 1"}
+			"apollo-person-1", {"apollo-subject-1": "subject line 1", "apollo-body-1": "content body 1"}
 		)
 
 	@patch("frappe.get_all")

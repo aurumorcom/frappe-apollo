@@ -113,7 +113,7 @@ class TestMultiChannelCadence(UnitTestCase):
 			method="frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence.update_sequence_contact_status",
 			queue="medium",
 			mcc_name="MCC-1",
-			mode="stop"
+			mode="stop",
 		)
 
 	@patch("frappe.enqueue")

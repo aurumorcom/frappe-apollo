@@ -155,7 +155,9 @@ class TestApolloClient(UnitTestCase):
 
 		self.assertIn("email_accounts", res)
 		self.assertEqual(len(res["email_accounts"]), 1)
-		mock_request.assert_called_once_with("GET", "https://api.apollo.io/api/v1/email_accounts", headers=client._get_headers())
+		mock_request.assert_called_once_with(
+			"GET", "https://api.apollo.io/api/v1/email_accounts", headers=client._get_headers()
+		)
 
 	@patch("frappe.get_doc")
 	def test_get_sequence_success(self, mock_get_doc):

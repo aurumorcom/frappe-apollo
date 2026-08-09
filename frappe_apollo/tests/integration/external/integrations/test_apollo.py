@@ -224,11 +224,14 @@ class TestApolloExternalAPI(IntegrationTestCase):
 		self.assertEqual(touches[0].get("status"), "approved", "Touch status should be approved")
 		self.assertEqual(touches[0].get("type"), "new_thread", "Touch type should be new_thread")
 
-	@my_vcr.use_cassette('test_apollo_refresh.yaml')
+	@my_vcr.use_cassette("test_apollo_refresh.yaml")
 	def test_proactive_token_refresh(self):
 		import os
+
 		if not frappe.conf.get("apollo_test_account") and not os.environ.get("APOLLO_TEST_ACCOUNT"):
-			if not os.path.exists(os.path.join(os.path.dirname(__file__), 'cassettes', 'test_apollo_refresh.yaml')):
+			if not os.path.exists(
+				os.path.join(os.path.dirname(__file__), "cassettes", "test_apollo_refresh.yaml")
+			):
 				self.skipTest("No credentials and no cassette found for this test.")
 
 		account = frappe.get_doc("Apollo Account", self.account_name)
