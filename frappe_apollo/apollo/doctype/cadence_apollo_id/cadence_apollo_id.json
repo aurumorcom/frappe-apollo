@@ -7,8 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "account",
-  "sender",
-  "status"
+  "sender"
  ],
  "fields": [
   {
@@ -26,14 +25,6 @@
    "label": "Sender",
    "options": "User",
    "reqd": 1
-  },
-  {
-   "default": "Active",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "Active\nInactive"
   }
  ],
  "index_web_pages_for_search": 1,

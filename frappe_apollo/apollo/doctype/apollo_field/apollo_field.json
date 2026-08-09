@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "label",
+  "integrations_tab",
   "apollo_ids"
  ],
  "fields": [
@@ -16,6 +17,11 @@
    "fieldtype": "Data",
    "label": "Label",
    "required": 1
+  },
+  {
+   "fieldname": "integrations_tab",
+   "fieldtype": "Tab Break",
+   "label": "Integrations"
   },
   {
    "fieldname": "apollo_ids",
