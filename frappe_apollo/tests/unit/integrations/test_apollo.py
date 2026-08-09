@@ -116,6 +116,27 @@ class TestApolloClient(UnitTestCase):
 		self.assertEqual(res, {"success": True})
 		self.assertEqual(mock_request.call_count, 2)
 
+	@patch("frappe.get_doc")
+	@patch("frappe_apollo.integrations.apollo.requests.request")
+	def test_add_contacts_to_sequence_with_alias(self, mock_request, mock_get_doc):
+		mock_account = MagicMock()
+		mock_account.refresh_token = None
+		mock_account.get.return_value = None
+		mock_get_doc.return_value = mock_account
+
+		mock_response = MagicMock()
+		mock_response.status_code = 200
+		mock_response.json.return_value = {"success": True}
+		mock_request.return_value = mock_response
+
+		client = ApolloClient("Test Account")
+		res = client.add_contacts_to_sequence("person-1", "seq-1", "mb-1", email_address="alias@example.com")
+
+		self.assertEqual(res, {"success": True})
+		mock_request.assert_called_once()
+		call_kwargs = mock_request.call_args[1]
+		self.assertEqual(call_kwargs["json"]["send_email_from_email_address"], "alias@example.com")
+
 	@patch("frappe.log_error")
 	@patch("frappe.db.commit")
 	@patch("frappe.get_doc")

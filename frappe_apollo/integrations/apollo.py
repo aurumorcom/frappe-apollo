@@ -113,13 +113,16 @@ class ApolloClient:
 				return self._request("PUT", endpoint, json=payload)
 			raise
 
-	def add_contacts_to_sequence(self, contact_id, sequence_id, mailbox_id):
+	def add_contacts_to_sequence(self, contact_id, sequence_id, mailbox_id, email_address=None):
 		endpoint = f"/emailer_campaigns/{sequence_id}/add_contact_ids"
 		payload = {
 			"contact_ids": [contact_id],
 			"emailer_campaign_id": sequence_id,
 			"send_email_from_email_account_id": mailbox_id,
 		}
+		if email_address:
+			payload["send_email_from_email_address"] = email_address
+
 		try:
 			return self._request("POST", endpoint, json=payload)
 		except requests.exceptions.HTTPError as e:
@@ -129,6 +132,8 @@ class ApolloClient:
 					"emailer_campaign_id": sequence_id,
 					"send_email_from_email_account_id": mailbox_id,
 				}
+				if email_address:
+					params["send_email_from_email_address"] = email_address
 				return self._request("POST", endpoint, params=params)
 			raise
 

@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "account",
-  "sender"
+  "sender",
+  "email_account"
  ],
  "fields": [
   {
@@ -25,6 +26,13 @@
    "label": "Sender",
    "options": "User",
    "reqd": 1
+  },
+  {
+   "fieldname": "email_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Email Account",
+   "options": "Email Account"
   }
  ],
  "index_web_pages_for_search": 1,
