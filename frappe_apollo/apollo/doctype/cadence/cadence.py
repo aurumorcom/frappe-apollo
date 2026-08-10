@@ -62,7 +62,6 @@ def _ensure_local_apollo_fields(doc):
 						{
 							"doctype": "Apollo Field",
 							"label": label,
-							"field_type": apollo_type,
 						}
 					)
 					field_doc.insert(ignore_permissions=True)
@@ -141,7 +140,6 @@ def _create_fields(client, cadence_doc, account_name):
 						{
 							"doctype": "Apollo Field",
 							"label": label,
-							"field_type": apollo_type,
 						}
 					)
 					field_doc.insert(ignore_permissions=True)
@@ -149,7 +147,7 @@ def _create_fields(client, cadence_doc, account_name):
 				mapping_exists = any(r.account == account_name for r in field_doc.get("apollo_ids", []))
 				if not mapping_exists:
 					try:
-						res = client.create_custom_field(field_doc.label, field_doc.field_type)
+						res = client.create_custom_field(field_doc.label, apollo_type)
 						fields = res.get("typed_custom_fields", []) or res.get("custom_fields", [])
 						if fields:
 							apollo_id = fields[0].get("id")

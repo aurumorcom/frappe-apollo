@@ -171,9 +171,7 @@ class TestMCCIntegration(IntegrationTestCase):
 		)
 
 	@patch("frappe.get_doc")
-	@patch("frappe.db.get_value")
-	def test_wait_condition_evaluation_with_single_quote_account_name(self, mock_db_get_value, mock_get_doc):
-		from frappe.database.database import Database
+	def test_wait_condition_evaluation_with_single_quote_account_name(self, mock_get_doc):
 		from frappe.model.document import get_doc as real_get_doc
 
 		job_id = "test_job_single_quote_1"
@@ -191,9 +189,12 @@ class TestMCCIntegration(IntegrationTestCase):
 		mcc.sender = "user1"
 		mcc.apollo_account = account_name
 		mcc.apollo_sequence_id = "seq1"
+		mcc.cadence_name = None
 
 		email_account = MagicMock()
 		email_account.get.return_value = []  # Missing apollo_ids, forcing wait_for_event
+
+		real_db_get_value = frappe.db.get_value
 
 		def mock_get_value_side_effect(*args, **kwargs):
 			dt = args[0] if args else kwargs.get("doctype")
@@ -201,7 +202,13 @@ class TestMCCIntegration(IntegrationTestCase):
 				return 1
 			if dt == "User Email":
 				return "Email-Acc-1"
-			return Database.get_value(frappe.db, *args, **kwargs)
+			if dt == "Apollo Account":
+				fieldname = kwargs.get("fieldname") or (args[1] if len(args) > 1 and isinstance(args[1], str) else None)
+				if fieldname == "status":
+					return "Authorized"
+				if fieldname == "apollo_sequence_id":
+					return "seq1"
+			return real_db_get_value(*args, **kwargs)
 
 		def mock_get_doc_side_effect(*args, **kwargs):
 			doctype = (
@@ -215,8 +222,10 @@ class TestMCCIntegration(IntegrationTestCase):
 				return email_account
 			return real_get_doc(*args, **kwargs)
 
-		mock_db_get_value.side_effect = mock_get_value_side_effect
 		mock_get_doc.side_effect = mock_get_doc_side_effect
+		patcher = patch("frappe.db.get_value", side_effect=mock_get_value_side_effect)
+		patcher.start()
+		self.addCleanup(patcher.stop)
 
 		with self.assertRaises(SuspendJob):
 			add_contact_to_sequence("mcc1")

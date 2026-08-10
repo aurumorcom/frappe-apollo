@@ -153,35 +153,76 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 		).insert(ignore_permissions=True, ignore_mandatory=True)
 		return cadence
 
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence.wait_for_event")
 	def test_provision_field_suspension_provider_disabled(self, mock_wait):
+		cadence = self._create_test_cadence()
+		cadence.append("apollo_ids", {"account": "TestAccount1", "sender": "test_sender@example.com"})
+		cadence.save(ignore_permissions=True)
+
+		if frappe.db.table_exists("FS Job"):
+			frappe.db.sql(
+				"INSERT IGNORE INTO `tabFS Job` (name, job_name, status, queue, creation, modified, modified_by, owner) VALUES (%s, %s, %s, %s, NOW(), NOW(), 'Administrator', 'Administrator')",
+				("test_job_1", "test_job_func", "started", "high"),
+			)
+			frappe.db.commit()
+
+		frappe.flags.current_job_id = "test_job_1"
+		frappe.flags.current_job_step = 0
+
 		frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 0)
 		mock_wait.side_effect = SuspendJob("wait")
 
-		with self.assertRaises(SuspendJob):
-			provision_a_field("subject_1", "string", "TestAccount1")
+		try:
+			with self.assertRaises(SuspendJob):
+				provision_a_field("subject_1", "string", "TestAccount1")
+		finally:
+			frappe.flags.current_job_id = None
+			frappe.flags.current_job_step = None
 
 		mock_wait.assert_called_once()
 
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence.wait_for_event")
 	def test_provision_field_suspension_account_unauthorized(self, mock_wait):
+		cadence = self._create_test_cadence()
+		cadence.append("apollo_ids", {"account": "TestAccount1", "sender": "test_sender@example.com"})
+		cadence.save(ignore_permissions=True)
+
+		if frappe.db.table_exists("FS Job"):
+			frappe.db.sql(
+				"INSERT IGNORE INTO `tabFS Job` (name, job_name, status, queue, creation, modified, modified_by, owner) VALUES (%s, %s, %s, %s, NOW(), NOW(), 'Administrator', 'Administrator')",
+				("test_job_1", "test_job_func", "started", "high"),
+			)
+			frappe.db.commit()
+
+		frappe.flags.current_job_id = "test_job_1"
+		frappe.flags.current_job_step = 0
+
 		frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
 		frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Unauthorized")
 		mock_wait.side_effect = SuspendJob("wait")
 
-		with self.assertRaises(SuspendJob):
-			provision_a_field("subject_1", "string", "TestAccount1")
+		try:
+			with self.assertRaises(SuspendJob):
+				provision_a_field("subject_1", "string", "TestAccount1")
+		finally:
+			frappe.flags.current_job_id = None
+			frappe.flags.current_job_step = None
 
 		mock_wait.assert_called_once()
 
-	@patch("frappe_apollo.integrations.apollo.ApolloClient")
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence.ApolloClient")
 	def test_provision_field_creates_apollo_fields(self, mock_client_cls):
+		cadence = self._create_test_cadence()
+		cadence.append("apollo_ids", {"account": "TestAccount2", "sender": "test_sender@example.com"})
+		cadence.save(ignore_permissions=True)
+
 		frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
 		frappe.db.set_value("Apollo Account", "TestAccount2", "status", "Authorized")
 
 		mock_client = mock_client_cls.return_value
 		mock_client.create_custom_field.return_value = {"typed_custom_fields": [{"id": "custom_field_555"}]}
 		mock_client.get_sequence.return_value = {"emailer_steps": []}
+		mock_client.update_sequence.return_value = {}
 
 		provision_a_field("subject_1", "string", "TestAccount2")
 
@@ -261,5 +302,5 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 		mock_client = mock_client_cls.return_value
 		add_contact_to_sequence(mcc.name)
 		mock_client.add_contacts_to_sequence.assert_called_once_with(
-			"apollo_contact_1", "seq_account_2", "mailbox_1"
+			"apollo_contact_1", "seq_account_2", "mailbox_1", email_address="test_sender@example.com"
 		)
