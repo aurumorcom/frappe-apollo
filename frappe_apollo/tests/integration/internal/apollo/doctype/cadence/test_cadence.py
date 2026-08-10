@@ -273,5 +273,5 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 		mock_client = mock_client_cls.return_value
 		add_contact_to_sequence(mcc.name)
 		mock_client.add_contacts_to_sequence.assert_called_once_with(
-			"apollo_contact_1", "seq_account_2", "mailbox_1"
+			"apollo_contact_1", "seq_account_2", "mailbox_1", email_address="test_sender@example.com"
 		)
