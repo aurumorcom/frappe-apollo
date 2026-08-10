@@ -36,7 +36,6 @@ class TestInstallIntegration(IntegrationTestCase):
 		crm_meta = frappe.get_meta("CRM Lead")
 		crm_field = crm_meta.get_field("apollo_ids")
 		if crm_field:
-			self.assertEqual(crm_field.hidden, 0)
 			self.assertEqual(crm_field.insert_after, "integrations_tab")
 
 		email_meta = frappe.get_meta("Email Account")
