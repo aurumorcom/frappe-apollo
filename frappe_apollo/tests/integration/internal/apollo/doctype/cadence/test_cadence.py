@@ -155,6 +155,10 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
 	@patch("frappe_controller.utils.controller.wait_for_event")
 	def test_provision_field_suspension_provider_disabled(self, mock_wait):
+		cadence = self._create_test_cadence()
+		cadence.append("apollo_ids", {"account": "TestAccount1", "sender": "test_sender@example.com"})
+		cadence.save(ignore_permissions=True)
+
 		frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 0)
 		mock_wait.side_effect = SuspendJob("wait")
 
@@ -165,6 +169,10 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
 	@patch("frappe_controller.utils.controller.wait_for_event")
 	def test_provision_field_suspension_account_unauthorized(self, mock_wait):
+		cadence = self._create_test_cadence()
+		cadence.append("apollo_ids", {"account": "TestAccount1", "sender": "test_sender@example.com"})
+		cadence.save(ignore_permissions=True)
+
 		frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
 		frappe.db.set_value("Apollo Account", "TestAccount1", "status", "Unauthorized")
 		mock_wait.side_effect = SuspendJob("wait")
@@ -176,6 +184,10 @@ class TestApolloLifecycleE2E(IntegrationTestCase):
 
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")
 	def test_provision_field_creates_apollo_fields(self, mock_client_cls):
+		cadence = self._create_test_cadence()
+		cadence.append("apollo_ids", {"account": "TestAccount2", "sender": "test_sender@example.com"})
+		cadence.save(ignore_permissions=True)
+
 		frappe.db.set_value("Cadence Provider", "Apollo", "enabled", 1)
 		frappe.db.set_value("Apollo Account", "TestAccount2", "status", "Authorized")
 
