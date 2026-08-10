@@ -6,6 +6,7 @@ from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.cadence.cadence import (
 	_create_fields,
+	_ensure_local_apollo_fields,
 	_update_sequence,
 	_validate_for_sequence,
 	on_update,
@@ -205,3 +206,51 @@ class TestCadenceProvisioning(UnitTestCase):
 		self.assertEqual(mock_mcc.last_status, "In Progress")
 		self.assertEqual(mock_mcc.status, "Disabled")
 		mock_mcc.save.assert_called_once_with(ignore_permissions=True)
+
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence._get_supported_channels")
+	@patch("frappe.get_doc")
+	def test_create_fields_passes_apollo_type_directly_without_attribute_error(
+		self, mock_get_doc, mock_get_channels
+	):
+		mock_get_channels.return_value = ["Email"]
+		mock_client = MagicMock()
+		mock_client.create_custom_field.return_value = {
+			"typed_custom_fields": [{"id": "field_999"}]
+		}
+
+		mock_field_doc = MagicMock()
+		mock_field_doc.label = "subject_1"
+		del mock_field_doc.field_type
+		mock_field_doc.get.return_value = []
+
+		mock_get_doc.return_value = mock_field_doc
+
+		sch = {"channel": "Email", "reference_doctype": "Email Template"}
+		cadence_doc = MagicMock()
+		cadence_doc.get.return_value = [sch]
+
+		_create_fields(mock_client, cadence_doc, "Acc1")
+
+		mock_client.create_custom_field.assert_any_call("subject_1", "string")
+		mock_client.create_custom_field.assert_any_call("body_1", "textarea")
+
+	@patch("frappe_apollo.apollo.doctype.cadence.cadence._get_supported_channels")
+	@patch("frappe.get_doc")
+	def test_ensure_local_apollo_fields_creates_doc_with_valid_dict(
+		self, mock_get_doc, mock_get_channels
+	):
+		mock_get_channels.return_value = ["Email"]
+		mock_get_doc.side_effect = frappe.DoesNotExistError
+
+		sch = {"channel": "Email", "reference_doctype": "Email Template"}
+		cadence_doc = MagicMock()
+		cadence_doc.get.return_value = [sch]
+
+		_ensure_local_apollo_fields(cadence_doc)
+
+		doc_dict_calls = [
+			call.args[0] for call in mock_get_doc.call_args_list if isinstance(call.args[0], dict)
+		]
+		for doc_dict in doc_dict_calls:
+			self.assertNotIn("field_type", doc_dict)
+			self.assertEqual(doc_dict["doctype"], "Apollo Field")
