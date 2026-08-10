@@ -87,7 +87,9 @@ class TestCRMLead(UnitTestCase):
 
 		mock_get_value.side_effect = get_value_side_effect
 
-		mock_wait.side_effect = SuspendJob("wait")
+		mock_promise = MagicMock()
+		mock_promise.result.side_effect = SuspendJob("wait")
+		mock_enqueue.return_value = mock_promise
 
 		with self.assertRaises(SuspendJob):
 			_create_a_contact("mcc1")
@@ -97,12 +99,9 @@ class TestCRMLead(UnitTestCase):
 			queue="low",
 			lead_name="lead1",
 			account_name="Acc1",
+			as_child=True,
 		)
-		mock_wait.assert_called_once()
-		# Verify condition string safely inspects child table dicts
-		condition_arg = mock_wait.call_args[1].get("condition") or mock_wait.call_args[0][1]
-		self.assertIn("row.get('account')", condition_arg)
-		self.assertNotIn("argument.get('apollo_id')", condition_arg)
+		mock_promise.result.assert_called_once()
 
 	@patch("frappe.get_doc")
 	@patch("frappe.db.count")
@@ -160,6 +159,7 @@ class TestCRMLead(UnitTestCase):
 			queue="low",
 			lead_name="lead1",
 			account_name="Acc1",
+			as_child=True,
 		)
 
 	@patch("frappe.get_doc")
