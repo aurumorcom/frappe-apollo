@@ -148,7 +148,13 @@ def create_a_contact(lead_name, account_name):
 			"email": lead.email,
 			"organization_name": lead.organization,
 		}
-		apollo_id = client.create_contact(lead_data)
+		response = client.create_contact(lead_data)
+		apollo_id = None
+		if isinstance(response, dict):
+			apollo_id = response.get("contact", {}).get("id") or response.get("id")
+		elif isinstance(response, str):
+			apollo_id = response
+
 		if apollo_id:
 			# Get latest lead doc because it could be modified
 			lead = frappe.get_doc("CRM Lead", lead_name)
@@ -157,6 +163,7 @@ def create_a_contact(lead_name, account_name):
 			)
 			if current_row:
 				current_row.apollo_id = apollo_id
+				lead.flags.ignore_mandatory = True
 				lead.save(ignore_permissions=True)
 	except Exception as e:
 		frappe.log_error(title="Failed to create Contact in Apollo", message=str(e))
