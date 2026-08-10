@@ -193,10 +193,15 @@ def add_contact_to_sequence(mcc_name):
 		"CRM Lead Apollo ID", filters={"parent": mcc.recipient, "account": account_name}, fields=["apollo_id"]
 	)
 	if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
-		wait_for_event(
-			event_key=f"doc:CRM Lead:{mcc.recipient}:on_update",
-			condition=f"[row for row in argument.get('apollo_ids', []) if row.get('account') == {json.dumps(account_name)} and row.get('apollo_id')]",
+		promise = frappe.enqueue(
+			method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.create_a_contact",
+			queue="low",
+			lead_name=mcc.recipient,
+			account_name=account_name,
+			as_child=True,
 		)
+		promise.result()
+
 		mcc.reload()
 		if mcc.status not in ["Scheduled", "In Progress", "Active"]:
 			return
