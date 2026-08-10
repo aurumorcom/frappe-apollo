@@ -273,3 +273,31 @@ class TestCRMLead(UnitTestCase):
 			event_key="doc:Apollo Account:Acc_Unauthorized:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)
+
+	@patch("frappe.get_doc")
+	@patch("frappe.db.get_value")
+	@patch("frappe_apollo.integrations.apollo.ApolloClient")
+	def test_create_a_contact_extracts_id_from_dict_response(
+		self, mock_client_cls, mock_get_value, mock_get_doc
+	):
+		mock_get_value.side_effect = lambda dt, name, *args: 1 if dt == "Cadence Provider" else "Authorized"
+
+		lead = MagicMock()
+		lead.first_name = "Sanky"
+		lead.last_name = ""
+		lead.email = "sanky@example.com"
+		lead.organization = "Acme"
+		row = MagicMock(account="Acc1", apollo_id="")
+		lead.get.return_value = [row]
+
+		mock_get_doc.return_value = lead
+		mock_client = mock_client_cls.return_value
+		mock_client.create_contact.return_value = {
+			"contact": {"id": "contact_dict_6a791162", "first_name": "Sanky"},
+			"labels": [],
+		}
+
+		create_a_contact("lead1", "Acc1")
+
+		self.assertEqual(row.apollo_id, "contact_dict_6a791162")
+		lead.save.assert_called_once_with(ignore_permissions=True)
