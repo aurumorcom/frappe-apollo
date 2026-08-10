@@ -148,19 +148,19 @@ class TestMCCSchedulingToApolloEnrolmentFlow(IntegrationTestCase):
 		frappe.flags.current_job_id = job_id
 		frappe.flags.current_job_step = 0
 
-		# Step 3: Run add_contact_to_sequence directly - must suspend because lead missing apollo_id
+		# Step 3: Run add_contact_to_sequence directly - must suspend awaiting child job create_a_contact
 		with patch("frappe_apollo.integrations.apollo.ApolloClient"):
 			with self.assertRaises(SuspendJob) as cm:
 				add_contact_to_sequence(mcc.name)
 
-			# Verify correct event key format doc:CRM Lead:<recipient>:on_update
-			self.assertEqual(cm.exception.event_key, f"doc:CRM Lead:{lead.name}:on_update")
+			# Verify suspended event key format fs_job_finished:<child_job_id>
+			self.assertTrue(cm.exception.event_key.startswith("fs_job_finished:"))
 
 		# Reset job flags for lead save
 		frappe.flags.current_job_id = None
 		frappe.flags.current_job_step = None
 
-		# Step 4: Update lead with apollo_id and emit event
+		# Step 4: Update lead with apollo_id and emit child job finished event
 		lead.reload()
 		for row in lead.apollo_ids:
 			if row.account == account_name:
@@ -168,12 +168,16 @@ class TestMCCSchedulingToApolloEnrolmentFlow(IntegrationTestCase):
 		lead.flags.ignore_mandatory = True
 		lead.save(ignore_permissions=True)
 
+		child_job_id = cm.exception.event_key.replace("fs_job_finished:", "")
+		frappe.db.set_value("FS Job", child_job_id, "status", "finished")
 		emit_event(
-			f"doc:CRM Lead:{lead.name}:on_update",
-			lead.as_dict(),
+			f"fs_job_finished:{child_job_id}",
+			{"status": "finished"},
 		)
 
 		# Step 5: Run add_contact_to_sequence again - must complete and assign contact in Apollo
+		frappe.flags.current_job_id = job_id
+		frappe.flags.current_job_step = 0
 		with patch("frappe_apollo.integrations.apollo.ApolloClient") as mock_apollo_cls:
 			mock_client = mock_apollo_cls.return_value
 			add_contact_to_sequence(mcc.name)

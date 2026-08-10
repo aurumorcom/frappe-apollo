@@ -94,26 +94,24 @@ def _create_a_contact(mcc_name):
 	if current_row:
 		if not current_row.apollo_id:
 			# Enqueue creation in Apollo
-			frappe.enqueue(
+			promise = frappe.enqueue(
 				method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.create_a_contact",
 				queue="low",
 				lead_name=lead_name,
 				account_name=account_name,
+				as_child=True,
 			)
-
-			wait_for_event(
-				event_key=f"doc:CRM Lead:{lead_name}:on_update",
-				condition=f"[row for row in argument.get('apollo_ids', []) if row.get('account') == {json.dumps(account_name)} and row.get('apollo_id')]",
-				consider_events_since=lead.modified,
-			)
+			promise.result()
 		else:
 			# Enqueue update
-			frappe.enqueue(
+			promise = frappe.enqueue(
 				method="frappe_apollo.apollo.doctype.crm_lead.crm_lead.update_a_contact",
 				queue="low",
 				lead_name=lead_name,
 				account_name=account_name,
+				as_child=True,
 			)
+			promise.result()
 
 
 def create_a_contact(lead_name, account_name):
