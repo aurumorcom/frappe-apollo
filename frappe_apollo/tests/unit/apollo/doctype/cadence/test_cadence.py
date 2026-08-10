@@ -218,14 +218,18 @@ class TestCadenceProvisioning(UnitTestCase):
 			"typed_custom_fields": [{"id": "field_999"}]
 		}
 
-		mock_field_doc = MagicMock()
-		mock_field_doc.label = "subject_1"
-		del mock_field_doc.field_type
-		mock_field_doc.get.return_value = []
+		def get_doc_side_effect(*args, **kwargs):
+			label = args[1] if len(args) > 1 else "field_label"
+			doc = MagicMock()
+			doc.label = label
+			del doc.field_type
+			doc.get.return_value = []
+			return doc
 
-		mock_get_doc.return_value = mock_field_doc
+		mock_get_doc.side_effect = get_doc_side_effect
 
-		sch = {"channel": "Email", "reference_doctype": "Email Template"}
+		sch = MagicMock(channel="Email", reference_doctype="Email Template")
+		sch.get.side_effect = lambda k, d=None: {"channel": "Email", "reference_doctype": "Email Template"}.get(k, d)
 		cadence_doc = MagicMock()
 		cadence_doc.get.return_value = [sch]
 
@@ -240,9 +244,16 @@ class TestCadenceProvisioning(UnitTestCase):
 		self, mock_get_doc, mock_get_channels
 	):
 		mock_get_channels.return_value = ["Email"]
-		mock_get_doc.side_effect = frappe.DoesNotExistError
 
-		sch = {"channel": "Email", "reference_doctype": "Email Template"}
+		def get_doc_side_effect(*args, **kwargs):
+			if len(args) >= 2 and args[0] == "Apollo Field":
+				raise frappe.DoesNotExistError
+			return MagicMock()
+
+		mock_get_doc.side_effect = get_doc_side_effect
+
+		sch = MagicMock(channel="Email", reference_doctype="Email Template")
+		sch.get.side_effect = lambda k, d=None: {"channel": "Email", "reference_doctype": "Email Template"}.get(k, d)
 		cadence_doc = MagicMock()
 		cadence_doc.get.return_value = [sch]
 
