@@ -128,16 +128,16 @@ class TestEmailAccountIntegration(IntegrationTestCase):
 		daily_events = scheduler_events.get("daily", [])
 		all_events = scheduler_events.get("all", [])
 
-		target_method = "frappe_apollo.apollo.doctype.email_account.email_account.queue_get_email_accounts"
+		target_method = "frappe_apollo.apollo.doctype.email_account.email_account.enqueue_get_email_accounts"
 		self.assertIn(
 			target_method,
 			daily_events,
-			"queue_get_email_accounts should be registered in scheduler_events['daily']",
+			"enqueue_get_email_accounts should be registered in scheduler_events['daily']",
 		)
 		self.assertNotIn(
 			target_method,
 			all_events,
-			"queue_get_email_accounts should not be registered in scheduler_events['all']",
+			"enqueue_get_email_accounts should not be registered in scheduler_events['all']",
 		)
 
 	@patch("frappe_apollo.integrations.apollo.ApolloClient")
