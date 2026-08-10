@@ -189,6 +189,7 @@ class TestMCCIntegration(IntegrationTestCase):
 		mcc.sender = "user1"
 		mcc.apollo_account = account_name
 		mcc.apollo_sequence_id = "seq1"
+		mcc.cadence_name = None
 
 		email_account = MagicMock()
 		email_account.get.return_value = []  # Missing apollo_ids, forcing wait_for_event
