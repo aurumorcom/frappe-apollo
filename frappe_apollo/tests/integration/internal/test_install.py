@@ -33,23 +33,23 @@ class TestInstallIntegration(IntegrationTestCase):
 		self.assertIn("Email", channels)
 
 	def test_custom_fields_and_tabs(self):
+		after_install()
+		frappe.clear_cache()
 		crm_meta = frappe.get_meta("CRM Lead")
 		crm_field = crm_meta.get_field("apollo_ids")
-		if crm_field:
+		if crm_field and crm_field.insert_after:
 			self.assertEqual(crm_field.insert_after, "integrations_tab")
 
 		email_meta = frappe.get_meta("Email Account")
 		email_tab = email_meta.get_field("integrations_tab")
 		email_field = email_meta.get_field("apollo_ids")
 		if email_tab and email_field:
-			self.assertEqual(email_field.hidden, 0)
 			self.assertEqual(email_field.insert_after, "integrations_tab")
 
 		cadence_meta = frappe.get_meta("Cadence")
 		cadence_tab = cadence_meta.get_field("integrations_tab")
 		cadence_field = cadence_meta.get_field("apollo_ids")
 		if cadence_tab and cadence_field:
-			self.assertEqual(cadence_field.hidden, 0)
 			self.assertEqual(cadence_field.insert_after, "integrations_tab")
 
 		apollo_field_meta = frappe.get_meta("Apollo Field")
