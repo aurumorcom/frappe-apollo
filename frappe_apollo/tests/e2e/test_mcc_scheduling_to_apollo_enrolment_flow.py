@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_controller.utils.controller import SuspendJob, emit_event
 
 from frappe_apollo.apollo.doctype.crm_lead.crm_lead import _create_a_contact
 from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (
@@ -170,7 +169,7 @@ class TestMCCSchedulingToApolloEnrolmentFlow(IntegrationTestCase):
 
 		child_job_id = cm.exception.event_key.replace("fs_job_finished:", "")
 		frappe.db.set_value("FS Job", child_job_id, "status", "finished")
-		emit_event(
+		frappe.publish_event(
 			f"fs_job_finished:{child_job_id}",
 			{"status": "finished"},
 		)

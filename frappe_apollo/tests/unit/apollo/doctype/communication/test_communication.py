@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests import UnitTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.communication.communication import on_update, update_a_contact
 

@@ -4,7 +4,6 @@ import frappe
 
 
 def _create_a_contact(mcc_name):
-	from frappe_controller.utils.controller import wait_for_event
 
 	mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
 
@@ -24,7 +23,7 @@ def _create_a_contact(mcc_name):
 	)
 
 	if actual_comms < expected_comms:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Communication:after_insert",
 			condition=f"argument.get('reference_doctype') == 'Multi Channel Cadence' and argument.get('reference_name') == {json.dumps(mcc.name)}",
 		)
@@ -35,7 +34,7 @@ def _create_a_contact(mcc_name):
 	# Find Email Account to get Apollo Account
 	email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
 	if not email_account_name:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:User Email:after_insert",
 			condition=f"argument.get('parent') == {json.dumps(sender)}",
 		)
@@ -53,7 +52,7 @@ def _create_a_contact(mcc_name):
 		target_account = email_account.apollo_ids[0].account
 
 	if not target_account or not email_account.get("apollo_ids"):
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Email Account:{email_account_name}:on_update",
 			condition="[r for r in argument.get('apollo_ids', []) if r.get('apollo_id')]",
 		)
@@ -69,13 +68,13 @@ def _create_a_contact(mcc_name):
 	# Wait for Apollo Settings & Account
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
 	account = frappe.get_doc("Apollo Account", account_name)
 	if account.status != "Authorized":
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)
@@ -115,19 +114,18 @@ def _create_a_contact(mcc_name):
 
 
 def create_a_contact(lead_name, account_name):
-	from frappe_controller.utils.controller import SuspendJob, wait_for_event
 
 	from frappe_apollo.integrations.apollo import ApolloClient
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)
@@ -169,19 +167,18 @@ def create_a_contact(lead_name, account_name):
 
 
 def update_a_contact(lead_name, account_name):
-	from frappe_controller.utils.controller import SuspendJob, wait_for_event
 
 	from frappe_apollo.integrations.apollo import ApolloClient
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)

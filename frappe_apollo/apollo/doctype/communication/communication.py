@@ -1,5 +1,4 @@
 import frappe
-from frappe_controller.utils.controller import SuspendJob, wait_for_event
 
 
 def on_update(doc, method=None):
@@ -25,7 +24,7 @@ def update_a_contact(comm_name):
 
 	mcc = frappe.get_doc("Multi Channel Cadence", comm.reference_name)
 	if not mcc.apollo_account or not mcc.apollo_sequence_id:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Multi Channel Cadence:{mcc.name}:on_update",
 			condition="argument.get('apollo_account') and argument.get('apollo_sequence_id')",
 		)
@@ -35,13 +34,13 @@ def update_a_contact(comm_name):
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
 	account = frappe.get_doc("Apollo Account", account_name)
 	if account.status != "Authorized":
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)
@@ -50,7 +49,7 @@ def update_a_contact(comm_name):
 		"CRM Lead Apollo ID", filters={"parent": mcc.recipient, "account": account_name}, fields=["apollo_id"]
 	)
 	if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:CRM Lead:{mcc.recipient}:on_update",
 			condition=f"any(row.get('account') == '{account_name}' and row.get('apollo_id') for row in argument.get('apollo_ids', []))",
 		)
@@ -60,7 +59,7 @@ def update_a_contact(comm_name):
 			fields=["apollo_id"],
 		)
 		if not crm_lead_accounts or not crm_lead_accounts[0].get("apollo_id"):
-			raise SuspendJob("CRM Lead Apollo ID missing.")
+			raise frappe.DeferredJob("CRM Lead Apollo ID missing.")
 
 	contact_apollo_id = crm_lead_accounts[0].apollo_id
 
@@ -88,7 +87,7 @@ def update_a_contact(comm_name):
 				break
 
 	if not target_sch or step_index == 0:
-		wait_for_event(event_key=f"doc:Cadence:{mcc.cadence_name}:on_update")
+		frappe.wait_for_event(event_key=f"doc:Cadence:{mcc.cadence_name}:on_update")
 		cadence.reload()
 		step_index = 0
 		target_sch = None
@@ -104,10 +103,10 @@ def update_a_contact(comm_name):
 					target_sch = sch
 					break
 		if not target_sch or step_index == 0:
-			raise SuspendJob(f"Cadence schedule step {comm.cadence_schedule} missing or not supported.")
+			raise frappe.DeferredJob(f"Cadence schedule step {comm.cadence_schedule} missing or not supported.")
 
 	if step_index > 4:
-		raise SuspendJob(f"Calculated step index {step_index} exceeds maximum sequence step capacity (4).")
+		raise frappe.DeferredJob(f"Calculated step index {step_index} exceeds maximum sequence step capacity (4).")
 
 	ref_dt_val = getattr(target_sch, "reference_doctype", None) or (
 		target_sch.get("reference_doctype") if isinstance(target_sch, dict) else None
@@ -122,7 +121,7 @@ def update_a_contact(comm_name):
 		try:
 			subject_field = frappe.get_doc("Apollo Field", subject_field_name)
 		except frappe.DoesNotExistError:
-			wait_for_event(event_key=f"doc:Apollo Field:{subject_field_name}:on_update")
+			frappe.wait_for_event(event_key=f"doc:Apollo Field:{subject_field_name}:on_update")
 			subject_field = frappe.get_doc("Apollo Field", subject_field_name)
 
 		subject_apollo_id = None
@@ -132,7 +131,7 @@ def update_a_contact(comm_name):
 				break
 
 		if not subject_apollo_id:
-			wait_for_event(
+			frappe.wait_for_event(
 				event_key=f"doc:Apollo Field:{subject_field_name}:on_update",
 				condition=f"any(r.get('account') == '{account_name}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))",
 			)
@@ -142,7 +141,7 @@ def update_a_contact(comm_name):
 					subject_apollo_id = row.apollo_id
 					break
 			if not subject_apollo_id:
-				raise SuspendJob(
+				raise frappe.DeferredJob(
 					f"Subject field {subject_field_name} Apollo ID missing for account {account_name}."
 				)
 
@@ -151,7 +150,7 @@ def update_a_contact(comm_name):
 	try:
 		response_field = frappe.get_doc("Apollo Field", response_field_name)
 	except frappe.DoesNotExistError:
-		wait_for_event(event_key=f"doc:Apollo Field:{response_field_name}:on_update")
+		frappe.wait_for_event(event_key=f"doc:Apollo Field:{response_field_name}:on_update")
 		response_field = frappe.get_doc("Apollo Field", response_field_name)
 
 	response_apollo_id = None
@@ -161,7 +160,7 @@ def update_a_contact(comm_name):
 			break
 
 	if not response_apollo_id:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Field:{response_field_name}:on_update",
 			condition=f"any(r.get('account') == '{account_name}' and r.get('apollo_id') for r in argument.get('apollo_ids', []))",
 		)
@@ -171,7 +170,7 @@ def update_a_contact(comm_name):
 				response_apollo_id = row.apollo_id
 				break
 		if not response_apollo_id:
-			raise SuspendJob(
+			raise frappe.DeferredJob(
 				f"Message/Body field {response_field_name} Apollo ID missing for account {account_name}."
 			)
 

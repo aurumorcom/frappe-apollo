@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_controller.utils.background_jobs import JobPromise
 
 from frappe_apollo.apollo.doctype.cadence.cadence import update_sequence_steps
 
