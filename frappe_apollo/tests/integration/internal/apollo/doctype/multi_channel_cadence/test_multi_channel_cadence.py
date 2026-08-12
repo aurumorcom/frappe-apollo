@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.crm_lead.crm_lead import _create_a_contact
 from frappe_apollo.apollo.doctype.multi_channel_cadence.multi_channel_cadence import (

@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.apollo_field.apollo_field import provision_a_field
 from frappe_apollo.apollo.doctype.cadence_provider.cadence_provider import (
@@ -61,7 +60,7 @@ class TestCadenceProvider(IntegrationTestCase):
 		mock_update_seq.assert_called_once_with("Cadence1", "TestDefectAccount")
 
 	@patch("frappe.db.get_value")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_contact_creation_registers_provider_event_listener(self, mock_wait, mock_get_value):
 		mock_get_value.side_effect = lambda dt, name_or_filters=None, fieldname=None, *args, **kwargs: (
 			0 if dt == "Cadence Provider" else "Authorized"
@@ -76,7 +75,7 @@ class TestCadenceProvider(IntegrationTestCase):
 		)
 
 	@patch("frappe.db.get_value")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_contact_update_registers_provider_event_listener(self, mock_wait, mock_get_value):
 		mock_get_value.side_effect = lambda dt, name_or_filters=None, fieldname=None, *args, **kwargs: (
 			0 if dt == "Cadence Provider" else "Authorized"

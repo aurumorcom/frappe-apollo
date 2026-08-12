@@ -1,6 +1,4 @@
 import frappe
-from frappe_controller.utils.background_jobs import enqueue
-from frappe_controller.utils.controller import wait_for_event
 
 from frappe_apollo.integrations.apollo import ApolloClient
 
@@ -14,7 +12,7 @@ def on_update(doc, method=None):
 			continue
 
 		if _check_account_requires_update(doc, account_name, required_field_labels):
-			enqueue(
+			frappe.enqueue(
 				"frappe_apollo.apollo.doctype.cadence.cadence.update_sequence_steps",
 				queue="low",
 				cadence_name=doc.name,
@@ -22,7 +20,7 @@ def on_update(doc, method=None):
 			)
 
 	if doc.has_value_changed("enabled"):
-		enqueue(
+		frappe.enqueue(
 			"frappe_apollo.apollo.doctype.cadence.cadence.toggle_cadence_mccs",
 			queue="low",
 			cadence_name=doc.name,
@@ -88,21 +86,21 @@ def _check_account_requires_update(doc, account_name, required_field_labels):
 def update_sequence_steps(cadence_name, account_name, sender=None):
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Cadence Provider:Apollo:on_update",
 			condition="argument.get('enabled') == 1",
 		)
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)
 
 	apollo_sequence_id = frappe.db.get_value("Apollo Account", account_name, "apollo_sequence_id")
 	if not apollo_sequence_id:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('apollo_sequence_id')",
 		)

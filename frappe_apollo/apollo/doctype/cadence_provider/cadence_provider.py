@@ -1,5 +1,4 @@
 import frappe
-from frappe_controller.utils.background_jobs import enqueue
 
 
 def on_update(doc, method=None):
@@ -11,7 +10,7 @@ def on_update(doc, method=None):
 			account_name = r.get("account")
 			if cadence_name and account_name and (cadence_name, account_name) not in seen:
 				seen.add((cadence_name, account_name))
-				enqueue(
+				frappe.enqueue(
 					method="frappe_apollo.apollo.doctype.cadence.cadence.update_sequence_steps",
 					queue="low",
 					cadence_name=cadence_name,

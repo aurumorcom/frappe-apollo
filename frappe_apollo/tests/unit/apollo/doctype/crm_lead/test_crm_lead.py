@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, call, patch
 
 import frappe
 from frappe.tests import UnitTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.crm_lead.crm_lead import (
 	_create_a_contact,
@@ -14,7 +13,7 @@ from frappe_apollo.apollo.doctype.crm_lead.crm_lead import (
 class TestCRMLead(UnitTestCase):
 	@patch("frappe.get_doc")
 	@patch("frappe.db.count")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_create_a_contact_suspends_for_missing_communications(self, mock_wait, mock_count, mock_get_doc):
 		mcc = MagicMock()
 		mcc.name = "mcc1"
@@ -40,7 +39,7 @@ class TestCRMLead(UnitTestCase):
 	@patch("frappe.db.count")
 	@patch("frappe.db.get_value")
 	@patch("frappe.enqueue")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_create_a_contact_enqueues_create_if_no_apollo_id(
 		self, mock_wait, mock_enqueue, mock_get_value, mock_count, mock_get_doc
 	):
@@ -195,7 +194,7 @@ class TestCRMLead(UnitTestCase):
 	@patch("frappe.db.count")
 	@patch("frappe.db.get_value")
 	@patch("frappe.enqueue")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_create_a_contact_refetches_email_account_name_after_resumption(
 		self, mock_wait, mock_enqueue, mock_get_value, mock_count, mock_get_doc
 	):
@@ -252,7 +251,7 @@ class TestCRMLead(UnitTestCase):
 
 	@patch("frappe.get_doc")
 	@patch("frappe.db.get_value")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_create_a_contact_registers_event_listener_when_account_unauthorized(
 		self, mock_wait, mock_get_value, mock_get_doc
 	):

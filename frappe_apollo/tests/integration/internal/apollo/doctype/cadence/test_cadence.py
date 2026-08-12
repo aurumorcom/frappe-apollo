@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.apollo_field.apollo_field import provision_a_field
 from frappe_apollo.apollo.doctype.cadence.cadence import (

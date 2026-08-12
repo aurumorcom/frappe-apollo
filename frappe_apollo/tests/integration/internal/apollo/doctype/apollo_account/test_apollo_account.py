@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.apollo_account.apollo_account import provision_sequence
 
@@ -32,7 +31,7 @@ class TestApolloAccountIntegration(IntegrationTestCase):
 		frappe.db.rollback()
 		super().tearDown()
 
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_provision_sequence_suspends_when_unauthorized(self, mock_wait):
 		frappe.db.set_value("Apollo Account", "TestProvisionAccount", "status", "Unauthorized")
 		mock_wait.side_effect = SuspendJob("wait_authorized")

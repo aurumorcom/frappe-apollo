@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests import UnitTestCase
-from frappe_controller.utils.controller import SuspendJob
 
 from frappe_apollo.apollo.doctype.apollo_account.apollo_account import (
 	ApolloAccount,
@@ -11,7 +10,7 @@ from frappe_apollo.apollo.doctype.apollo_account.apollo_account import (
 
 
 class TestApolloAccount(UnitTestCase):
-	@patch("frappe_controller.utils.background_jobs.enqueue")
+	@patch("frappe.enqueue")
 	def test_on_update_enqueues_provision_sequence_when_status_changes_to_authorized(self, mock_enqueue):
 		doc = ApolloAccount({"doctype": "Apollo Account", "name": "Acc1", "status": "Authorized"})
 		doc.has_value_changed = MagicMock(side_effect=lambda field: True if field == "status" else False)
@@ -25,7 +24,7 @@ class TestApolloAccount(UnitTestCase):
 		)
 
 	@patch("frappe.db.get_value")
-	@patch("frappe_controller.utils.controller.wait_for_event")
+	@patch("frappe.wait_for_event")
 	def test_provision_sequence_suspends_if_not_authorized(self, mock_wait, mock_db_get_value):
 		mock_db_get_value.return_value = "Unauthorized"
 		mock_wait.side_effect = SuspendJob("wait")

@@ -7,9 +7,7 @@ from frappe.model.document import Document
 class ApolloAccount(Document):
 	def on_update(self):
 		if self.has_value_changed("status") and self.status == "Authorized":
-			from frappe_controller.utils.background_jobs import enqueue
-
-			enqueue(
+			frappe.enqueue(
 				"frappe_apollo.apollo.doctype.apollo_account.apollo_account.provision_sequence",
 				queue="low",
 				account_name=self.name,
@@ -42,13 +40,12 @@ class ApolloAccount(Document):
 
 def provision_sequence(account_name):
 	import requests
-	from frappe_controller.utils.controller import wait_for_event
 
 	from frappe_apollo.integrations.apollo import ApolloClient
 
 	account_status = frappe.db.get_value("Apollo Account", account_name, "status")
 	if account_status != "Authorized":
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{account_name}:on_update",
 			condition="argument.get('status') == 'Authorized'",
 		)

@@ -1,7 +1,6 @@
 import json
 
 import frappe
-from frappe_controller.utils.controller import wait_for_event
 
 
 def before_save(doc, method=None):
@@ -113,7 +112,7 @@ def add_contact_to_sequence(mcc_name):
 
 	is_enabled = frappe.db.get_value("Cadence Provider", "Apollo", "enabled")
 	if not is_enabled:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:Cadence Provider:Apollo:on_update", condition="argument.get('enabled') == 1"
 		)
 
@@ -126,7 +125,7 @@ def add_contact_to_sequence(mcc_name):
 		)
 
 	if not mcc.apollo_sequence_id:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Apollo Account:{mcc.apollo_account}:on_update",
 			condition="argument.get('apollo_sequence_id')",
 		)
@@ -155,7 +154,7 @@ def add_contact_to_sequence(mcc_name):
 		email_account_name = frappe.db.get_value("User Email", {"parent": sender}, "email_account")
 
 	if not email_account_name:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key="doc:User Email:after_insert",
 			condition=f"argument.get('parent') == {json.dumps(sender)}",
 		)
@@ -174,7 +173,7 @@ def add_contact_to_sequence(mcc_name):
 			break
 
 	if not apollo_mailbox_id:
-		wait_for_event(
+		frappe.wait_for_event(
 			event_key=f"doc:Email Account:{email_account_name}:on_update",
 			condition=f"[row for row in argument.get('apollo_ids', []) if row.get('account') == {json.dumps(account_name)} and row.get('apollo_id')]",
 		)
